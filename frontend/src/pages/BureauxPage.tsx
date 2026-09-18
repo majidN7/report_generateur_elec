@@ -9,6 +9,7 @@ import {
   updateBureau,
 } from "../api/bureaux"
 import { extractErrorMessage } from "../api/client"
+import { importExcelFile } from "../api/importApi"
 import type { BureauVote, BureauVoteInput } from "../api/types"
 import { BureauDetails } from "../components/BureauDetails"
 import { BureauForm } from "../components/BureauForm"
@@ -272,6 +273,13 @@ export function BureauxPage() {
 
       {showImport && (
         <ImportModal
+          title="Importer le fichier Excel"
+          description={
+            'Sélectionnez le fichier Excel contenant la feuille "Donnees_Fusion" avec les colonnes ' +
+            "الرئيس, نائب الرئيس, رقم مكتب التصويت, الجماعة, عنوان مكتب التصويت, رقم المكتب المركزي, " +
+            "رئيس المكتب المركزي, أعضاء et نواب."
+          }
+          importFn={importExcelFile}
           onClose={() => setShowImport(false)}
           onImported={() => {
             setPage(1)

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import {
+  createBureauCentral,
   deleteBureauCentral,
   downloadBureauCentralDocument,
   generateBatchCentraux,
@@ -7,10 +8,12 @@ import {
   updateBureauCentral,
 } from "../api/bureauxCentraux"
 import { extractErrorMessage } from "../api/client"
+import { importExcelBureauxCentraux } from "../api/importApi"
 import type { BureauCentral, BureauCentralInput } from "../api/types"
 import { BureauCentralDetails } from "../components/BureauCentralDetails"
 import { BureauCentralForm } from "../components/BureauCentralForm"
 import { ConfirmDialog } from "../components/ConfirmDialog"
+import { ImportModal } from "../components/ImportModal"
 import { Modal } from "../components/Modal"
 import { Pagination } from "../components/Pagination"
 import { useToast } from "../components/ToastProvider"
@@ -39,8 +42,9 @@ export function BureauxCentrauxPage() {
   const [search, setSearch] = useState("")
   const [loading, setLoading] = useState(false)
   const [generating, setGenerating] = useState(false)
+  const [showImport, setShowImport] = useState(false)
 
-  const [editing, setEditing] = useState<BureauCentral | null>(null)
+  const [editing, setEditing] = useState<BureauCentral | "new" | null>(null)
   const [viewing, setViewing] = useState<BureauCentral | null>(null)
   const [deleting, setDeleting] = useState<BureauCentral | null>(null)
 
@@ -63,10 +67,15 @@ export function BureauxCentrauxPage() {
   }, [page, search])
 
   async function handleSave(payload: BureauCentralInput) {
-    if (!editing) return
-    await updateBureauCentral(editing.id, payload)
-    showToast("Bureau central mis à jour")
+    if (editing === "new") {
+      await createBureauCentral(payload)
+      showToast("Bureau central créé avec succès")
+    } else if (editing) {
+      await updateBureauCentral(editing.id, payload)
+      showToast("Bureau central mis à jour")
+    }
     setEditing(null)
+    setPage(1)
     load()
   }
 
@@ -108,10 +117,17 @@ export function BureauxCentrauxPage() {
         <div>
           <h2 className="text-xl font-semibold text-slate-800">Bureaux centraux</h2>
           <p className="text-sm text-slate-500">
-            {total} bureau(x) central(aux) — créés automatiquement lors de l'import, à compléter avant génération
+            {total} bureau(x) central(aux) — importés ou créés automatiquement lors de l'import des bureaux de
+            vote, à compléter avant génération
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setShowImport(true)}
+            className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
+          >
+            Importer Excel
+          </button>
           <button
             onClick={() => handleBatch("docx")}
             disabled={generating}
@@ -125,6 +141,12 @@ export function BureauxCentrauxPage() {
             className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-50"
           >
             Générer tout (PDF)
+          </button>
+          <button
+            onClick={() => setEditing("new")}
+            className="rounded-md bg-blue-600 px-3 py-1.5 text-sm text-white hover:bg-blue-700"
+          >
+            + Ajouter un bureau central
           </button>
         </div>
       </div>
@@ -228,9 +250,35 @@ export function BureauxCentrauxPage() {
         <Pagination page={page} pageSize={PAGE_SIZE} total={total} onPageChange={setPage} />
       </div>
 
+      {showImport && (
+        <ImportModal
+          title="Importer le fichier Excel des bureaux centraux"
+          description={
+            'Sélectionnez le fichier Excel dédié aux bureaux centraux (feuille "Bureaux_Centraux"), avec ' +
+            "les colonnes : الجماعة, رقم المكتب المركزي, رئيس المكتب المركزي, عنوان المكتب المركزي, " +
+            "نائب رئيس المكتب المركزي, أعضاء et نواب. Les 3 premières colonnes sont obligatoires ; les " +
+            "autres complètent ou mettent à jour une fiche existante."
+          }
+          importFn={importExcelBureauxCentraux}
+          onClose={() => setShowImport(false)}
+          onImported={() => {
+            setPage(1)
+            load()
+          }}
+        />
+      )}
+
       {editing && (
-        <Modal title="Compléter le bureau central" onClose={() => setEditing(null)} wide>
-          <BureauCentralForm initial={editing} onSubmit={handleSave} onCancel={() => setEditing(null)} />
+        <Modal
+          title={editing === "new" ? "Ajouter un bureau central" : "Compléter le bureau central"}
+          onClose={() => setEditing(null)}
+          wide
+        >
+          <BureauCentralForm
+            initial={editing === "new" ? undefined : editing}
+            onSubmit={handleSave}
+            onCancel={() => setEditing(null)}
+          />
         </Modal>
       )}
 

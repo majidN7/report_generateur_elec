@@ -110,13 +110,18 @@ appels `/api/*` vers `http://localhost:8000` (voir `vite.config.ts`).
 2. **Gérer les bureaux** : recherchez, filtrez par commune, triez, consultez
    le détail, modifiez ou supprimez un enregistrement, ou ajoutez-en un
    manuellement.
-3. **Compléter les bureaux centraux** : l'import crée automatiquement une
-   fiche par bureau central référencé (numéro + président). Comme le fichier
-   Excel source ne fournit pas le vice-président, les membres, les
-   suppléants ni l'adresse propres au bureau central, ces fiches doivent être
-   complétées manuellement dans l'onglet *Bureaux centraux* avant de pouvoir
-   générer leur arrêté (un badge *À compléter* / *Complet* indique le
-   statut).
+3. **Compléter les bureaux centraux** : l'import du fichier principal crée
+   automatiquement une fiche par bureau central référencé (numéro +
+   président seulement). Il existe deux façons de la compléter :
+   - manuellement, via *Modifier* dans l'onglet *Bureaux centraux* ;
+   - en important un **fichier Excel dédié aux bureaux centraux** (bouton
+     *Importer Excel* de l'onglet *Bureaux centraux*), qui alimente en une
+     fois le vice-président, les 3 membres, les 3 suppléants et l'adresse
+     pour tous les bureaux centraux du fichier (voir colonnes attendues
+     ci-dessous). Cet import fonctionne aussi de façon autonome : un bureau
+     central qui n'existe pas encore est créé directement à partir de ce
+     fichier, sans dépendre d'un import préalable des bureaux de vote.
+   Un badge *À compléter* / *Complet* indique si l'arrêté peut être généré.
 4. **Générer les arrêtés** :
    - Depuis une ligne du tableau : boutons *Word* / *PDF* pour un
      téléchargement unitaire.
@@ -124,25 +129,57 @@ appels `/api/*` vers `http://localhost:8000` (voir `vite.config.ts`).
      ZIP contenant l'arrêté de chaque bureau (les bureaux centraux
      incomplets sont ignorés et comptabilisés).
 
+## Import dédié des bureaux centraux
+
+En plus de la création automatique de fiches "bureau central" lors de
+l'import principal, l'onglet *Bureaux centraux* propose son propre bouton
+*Importer Excel* (`POST /api/bureaux-centraux/import`) pour un fichier
+dédié à ces bureaux. Colonnes attendues dans la feuille de données
+(idéalement nommée `Bureaux_Centraux`) :
+
+| Colonne (obligatoire)         | Champ                            |
+|--------------------------------|-----------------------------------|
+| الجماعة                        | Commune                           |
+| رقم المكتب المركزي             | Numéro du bureau central          |
+| رئيس المكتب المركزي            | Président                         |
+
+| Colonne (optionnelle)                | Champ                        |
+|----------------------------------------|-------------------------------|
+| عنوان المكتب المركزي                  | Adresse                       |
+| نائب رئيس المكتب المركزي              | Vice-président                |
+| العضو الأول / الثاني / الثالث         | Membres 1 à 3                 |
+| نائب العضو الأول / الثاني / الثالث    | Suppléants 1 à 3               |
+
+Le rapprochement se fait par (commune, numéro de bureau central) : une
+fiche existante (même auto-créée en stub) est complétée/mise à jour, une
+fiche absente est créée directement — cet import ne dépend donc pas d'un
+import préalable des bureaux de vote. Une cellule optionnelle laissée vide
+ne réinitialise pas une valeur déjà enregistrée. **Si vos en-têtes réels
+diffèrent** de ce tableau, ajustez `COLUMN_MAP` dans
+`backend/app/services/excel_import_central.py` (aucune migration requise,
+ce sont des colonnes déjà présentes dans le modèle `BureauCentral`).
+
 ## Décisions de conception importantes
 
 - **Deux modèles de documents** : le fichier Word officiel fourni contient
   deux arrêtés types (bureaux de vote ordinaires et bureaux de vote
-  centraux). Ils ont été convertis en deux modèles `docxtpl` distincts
-  (`backend/app/templates_word/bureau_ordinaire.docx` et
+  centraux — ce dernier correspond au modèle `Rapport_bureaux_centreux.docx`
+  fourni séparément). Ils ont été convertis en deux modèles `docxtpl`
+  distincts (`backend/app/templates_word/bureau_ordinaire.docx` et
   `bureau_central.docx`) en remplaçant les pointillés du modèle par des
   variables Jinja (`{{ president }}`, `{{ numero_bureau }}`, etc.), tout en
   conservant la mise en forme, l'en-tête et le logo institutionnel d'origine.
-- **Bureaux centraux = fiches à compléter** : le fichier Excel fourni ne
-  contient, pour chaque bureau central, que son numéro et le nom de son
-  président (ces informations apparaissent répétées sur chaque ligne des
-  bureaux ordinaires qui lui sont rattachés). Il ne fournit ni son
-  vice-président, ni ses membres/suppléants, ni son adresse propre.
+- **Bureaux centraux = fiches à compléter (ou import dédié)** : le fichier
+  Excel principal ne contient, pour chaque bureau central, que son numéro et
+  le nom de son président (ces informations apparaissent répétées sur
+  chaque ligne des bureaux ordinaires qui lui sont rattachés). Il ne fournit
+  ni son vice-président, ni ses membres/suppléants, ni son adresse propre.
   Plutôt que d'inventer ces données, l'application crée automatiquement une
   fiche "bureau central" (dédupliquée par commune + numéro) lors de l'import
-  et bloque la génération de son arrêté tant que ces champs n'ont pas été
-  renseignés manuellement — avec un message d'erreur explicite listant les
-  champs manquants.
+  principal et bloque la génération de son arrêté tant que ces champs n'ont
+  pas été renseignés — manuellement, ou via l'import Excel dédié décrit
+  ci-dessus — avec un message d'erreur explicite listant les champs
+  manquants.
 - **Adresse du bureau central (arrêté ordinaire)** : la phrase de l'arrêté
   ordinaire mentionne aussi le lieu du bureau central de rattachement. Par
   défaut, l'application réutilise l'adresse du bureau de vote lui-même
@@ -170,6 +207,7 @@ Voir l'arborescence ci-dessus. Les routes API principales :
 | GET     | `/api/bureaux/{id}/document`       | Télécharger l'arrêté (docx ou pdf)    |
 | POST    | `/api/bureaux/generate-batch`      | Télécharger un ZIP de tous les arrêtés|
 | GET/POST/PUT/DELETE | `/api/bureaux-centraux*`   | Mêmes opérations pour les bureaux centraux |
+| POST    | `/api/bureaux-centraux/import`     | Import dédié du fichier Excel des bureaux centraux |
 
 Documentation interactive complète (Swagger) disponible sur `/docs` une fois
 le backend démarré.
@@ -181,7 +219,12 @@ cd backend
 pytest
 ```
 
-Les tests couvrent l'import Excel (succès, doublons, upsert, validation),
-le CRUD des bureaux et la génération de documents (Word, PDF si LibreOffice
-est disponible, ZIP en masse, validation des champs obligatoires des
-bureaux centraux).
+Les tests couvrent l'import Excel principal et l'import dédié des bureaux
+centraux (succès, doublons, upsert, validation), le CRUD des bureaux et la
+génération de documents (Word, PDF si LibreOffice est disponible, ZIP en
+masse, validation des champs obligatoires des bureaux centraux).
+
+**Migration de base de données** : l'import dédié des bureaux centraux
+réutilise intégralement les colonnes déjà présentes sur `BureauCentral`
+(ajoutées dès la première version) ; aucune nouvelle migration Alembic
+n'était nécessaire pour cette fonctionnalité.

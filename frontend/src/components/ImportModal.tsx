@@ -1,15 +1,17 @@
 import { useRef, useState } from "react"
-import { importExcelFile } from "../api/importApi"
 import { extractErrorMessage } from "../api/client"
 import type { ImportReport } from "../api/types"
 import { Modal } from "./Modal"
 
 interface ImportModalProps {
+  title: string
+  description: string
+  importFn: (file: File) => Promise<ImportReport>
   onClose: () => void
   onImported: () => void
 }
 
-export function ImportModal({ onClose, onImported }: ImportModalProps) {
+export function ImportModal({ title, description, importFn, onClose, onImported }: ImportModalProps) {
   const fileInput = useRef<HTMLInputElement>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -25,7 +27,7 @@ export function ImportModal({ onClose, onImported }: ImportModalProps) {
     setLoading(true)
     setError(null)
     try {
-      const result = await importExcelFile(file)
+      const result = await importFn(file)
       setReport(result)
       onImported()
     } catch (err) {
@@ -36,14 +38,10 @@ export function ImportModal({ onClose, onImported }: ImportModalProps) {
   }
 
   return (
-    <Modal title="Importer le fichier Excel" onClose={onClose}>
+    <Modal title={title} onClose={onClose}>
       {!report ? (
         <form onSubmit={handleSubmit} className="space-y-4">
-          <p className="text-sm text-slate-600">
-            Sélectionnez le fichier Excel contenant la feuille "Donnees_Fusion" avec les colonnes
-            الرئيس, نائب الرئيس, رقم مكتب التصويت, الجماعة, عنوان مكتب التصويت, رقم المكتب المركزي,
-            رئيس المكتب المركزي, أعضاء et نواب.
-          </p>
+          <p className="text-sm text-slate-600">{description}</p>
           <input
             ref={fileInput}
             type="file"
@@ -83,9 +81,11 @@ export function ImportModal({ onClose, onImported }: ImportModalProps) {
             <div className="rounded-md bg-amber-50 p-2">
               Doublons ignorés : <strong>{report.skipped_duplicates}</strong>
             </div>
-            <div className="col-span-2 rounded-md bg-slate-50 p-2">
-              Bureaux centraux créés (à compléter) : <strong>{report.bureaux_centraux_created}</strong>
-            </div>
+            {report.bureaux_centraux_created > 0 && (
+              <div className="col-span-2 rounded-md bg-slate-50 p-2">
+                Bureaux centraux créés (à compléter) : <strong>{report.bureaux_centraux_created}</strong>
+              </div>
+            )}
           </div>
           {report.errors.length > 0 && (
             <div className="max-h-40 overflow-y-auto rounded-md border border-red-200 bg-red-50 p-2 text-sm text-red-700">

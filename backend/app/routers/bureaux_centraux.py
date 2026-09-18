@@ -1,6 +1,6 @@
 from urllib.parse import quote
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from fastapi.responses import StreamingResponse
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
@@ -13,7 +13,9 @@ from app.schemas.bureau_central import (
     BureauCentralPage,
     BureauCentralUpdate,
 )
+from app.schemas.import_report import ImportReport
 from app.services import word_merge
+from app.services.excel_import_central import import_excel_bureaux_centraux
 
 router = APIRouter(prefix="/api/bureaux-centraux", tags=["bureaux-centraux"])
 
@@ -75,6 +77,18 @@ def list_bureaux_centraux(
     items = query.offset((page - 1) * page_size).limit(page_size).all()
 
     return BureauCentralPage(items=items, total=total, page=page, page_size=page_size)
+
+
+@router.post("/import", response_model=ImportReport)
+def import_bureaux_centraux(file: UploadFile = File(...), db: Session = Depends(get_db)):
+    if not file.filename.lower().endswith((".xlsx", ".xlsm")):
+        raise HTTPException(status_code=400, detail="Le fichier doit être un fichier Excel (.xlsx)")
+
+    content = file.file.read()
+    try:
+        return import_excel_bureaux_centraux(db, content)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @router.get("/{bureau_id}", response_model=BureauCentralOut)
