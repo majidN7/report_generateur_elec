@@ -21,6 +21,19 @@ import { useToast } from "../components/ToastProvider"
 
 const PAGE_SIZE = 15
 
+function isComplete(b: BureauVote): boolean {
+  return Boolean(
+    b.president_cin &&
+      b.vice_president_cin &&
+      b.membre_1_cin &&
+      b.membre_2_cin &&
+      b.membre_3_cin &&
+      b.suppleant_1_cin &&
+      b.suppleant_2_cin &&
+      b.suppleant_3_cin
+  )
+}
+
 export function BureauxPage() {
   const { showToast } = useToast()
 
@@ -116,7 +129,7 @@ export function BureauxPage() {
     setGenerating(true)
     try {
       await generateBatch(format)
-      showToast("Archive générée avec succès")
+      showToast("Archive générée (les bureaux sans CIN complet sont ignorés)")
     } catch (err) {
       showToast(extractErrorMessage(err), "error")
     } finally {
@@ -205,20 +218,21 @@ export function BureauxPage() {
                 الرئيس{sortIndicator("president")}
               </th>
               <th className="px-3 py-2">المكتب المركزي</th>
+              <th className="px-3 py-2">Statut</th>
               <th className="px-3 py-2 text-left">Actions</th>
             </tr>
           </thead>
           <tbody>
             {loading && (
               <tr>
-                <td colSpan={5} className="px-3 py-6 text-center text-slate-400">
+                <td colSpan={6} className="px-3 py-6 text-center text-slate-400">
                   Chargement...
                 </td>
               </tr>
             )}
             {!loading && items.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-3 py-6 text-center text-slate-400">
+                <td colSpan={6} className="px-3 py-6 text-center text-slate-400">
                   Aucun bureau de vote. Importez un fichier Excel ou ajoutez-en un manuellement.
                 </td>
               </tr>
@@ -230,6 +244,17 @@ export function BureauxPage() {
                   <td className="px-3 py-2">{bureau.commune}</td>
                   <td className="px-3 py-2">{bureau.president}</td>
                   <td className="px-3 py-2">{bureau.numero_bureau_central}</td>
+                  <td className="px-3 py-2">
+                    {isComplete(bureau) ? (
+                      <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-700">
+                        Complet
+                      </span>
+                    ) : (
+                      <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-700">
+                        CIN manquant(s)
+                      </span>
+                    )}
+                  </td>
                   <td className="px-3 py-2 text-left">
                     <div className="flex flex-wrap justify-end gap-1 text-xs">
                       <button
@@ -246,13 +271,15 @@ export function BureauxPage() {
                       </button>
                       <button
                         onClick={() => handleDownload(bureau, "docx")}
-                        className="rounded border border-blue-300 px-2 py-1 text-blue-700 hover:bg-blue-50"
+                        disabled={!isComplete(bureau)}
+                        className="rounded border border-blue-300 px-2 py-1 text-blue-700 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         Word
                       </button>
                       <button
                         onClick={() => handleDownload(bureau, "pdf")}
-                        className="rounded border border-blue-300 px-2 py-1 text-blue-700 hover:bg-blue-50"
+                        disabled={!isComplete(bureau)}
+                        className="rounded border border-blue-300 px-2 py-1 text-blue-700 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         PDF
                       </button>

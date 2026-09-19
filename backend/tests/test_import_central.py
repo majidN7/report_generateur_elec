@@ -27,6 +27,8 @@ def test_import_bureaux_centraux_success(client):
     assert full["vice_president_bureau_central"] == "نائب الرئيس"
     assert full["membre_central_1"] == "عضو أ"
     assert full["suppleant_central_3"] == "نائب ج"
+    assert full["president_cin"] == "P1"
+    assert full["suppleant_central_3_cin"] == "P8"
 
     partial = next(b for b in listing["items"] if b["numero_bureau_central"] == "8")
     assert partial["president_bureau_central"] == "الحبيب العسري"

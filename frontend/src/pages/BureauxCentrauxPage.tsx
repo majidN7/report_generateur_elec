@@ -29,7 +29,15 @@ function isComplete(b: BureauCentral): boolean {
       b.membre_central_3 &&
       b.suppleant_central_1 &&
       b.suppleant_central_2 &&
-      b.suppleant_central_3
+      b.suppleant_central_3 &&
+      b.president_cin &&
+      b.vice_president_cin &&
+      b.membre_central_1_cin &&
+      b.membre_central_2_cin &&
+      b.membre_central_3_cin &&
+      b.suppleant_central_1_cin &&
+      b.suppleant_central_2_cin &&
+      b.suppleant_central_3_cin
   )
 }
 

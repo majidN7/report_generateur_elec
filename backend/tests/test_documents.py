@@ -8,9 +8,39 @@ from tests.test_bureaux_crud import SAMPLE
 
 SOFFICE_AVAILABLE = shutil.which("soffice") is not None
 
+CIN_FIELDS = {
+    "president_cin": "AB1",
+    "vice_president_cin": "AB2",
+    "membre_1_cin": "AB3",
+    "membre_2_cin": "AB4",
+    "membre_3_cin": "AB5",
+    "suppleant_1_cin": "AB6",
+    "suppleant_2_cin": "AB7",
+    "suppleant_3_cin": "AB8",
+}
+SAMPLE_WITH_CIN = dict(SAMPLE, **CIN_FIELDS)
+
+CENTRAL_CIN_FIELDS = {
+    "president_cin": "PC1",
+    "vice_president_cin": "PC2",
+    "membre_central_1_cin": "PC3",
+    "membre_central_2_cin": "PC4",
+    "membre_central_3_cin": "PC5",
+    "suppleant_central_1_cin": "PC6",
+    "suppleant_central_2_cin": "PC7",
+    "suppleant_central_3_cin": "PC8",
+}
+
+
+def test_generate_bureau_docx_requires_cin(client):
+    bureau_id = client.post("/api/bureaux", json=SAMPLE).json()["id"]
+    incomplete = client.get(f"/api/bureaux/{bureau_id}/document?format=docx")
+    assert incomplete.status_code == 422
+    assert "CIN" in incomplete.json()["detail"]
+
 
 def test_generate_bureau_docx(client):
-    bureau_id = client.post("/api/bureaux", json=SAMPLE).json()["id"]
+    bureau_id = client.post("/api/bureaux", json=SAMPLE_WITH_CIN).json()["id"]
     response = client.get(f"/api/bureaux/{bureau_id}/document?format=docx")
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("application/vnd.openxmlformats")
@@ -19,19 +49,22 @@ def test_generate_bureau_docx(client):
 
 @pytest.mark.skipif(not SOFFICE_AVAILABLE, reason="LibreOffice n'est pas installé")
 def test_generate_bureau_pdf(client):
-    bureau_id = client.post("/api/bureaux", json=SAMPLE).json()["id"]
+    bureau_id = client.post("/api/bureaux", json=SAMPLE_WITH_CIN).json()["id"]
     response = client.get(f"/api/bureaux/{bureau_id}/document?format=pdf")
     assert response.status_code == 200
     assert response.headers["content-type"] == "application/pdf"
     assert response.content[:4] == b"%PDF"
 
 
-def test_generate_batch_zip(client):
+def test_generate_batch_zip_skips_incomplete_cin(client):
     for i in range(1, 4):
-        client.post("/api/bureaux", json=dict(SAMPLE, numero_bureau=str(i)))
+        client.post("/api/bureaux", json=dict(SAMPLE_WITH_CIN, numero_bureau=str(i)))
+    # one bureau without CIN, should be skipped rather than fail the whole batch
+    client.post("/api/bureaux", json=dict(SAMPLE, numero_bureau="99"))
 
     response = client.post("/api/bureaux/generate-batch?format=docx")
     assert response.status_code == 200
+    assert response.headers["X-Skipped-Incomplete"] == "1"
     zf = zipfile.ZipFile(BytesIO(response.content))
     assert len(zf.namelist()) == 3
 
@@ -58,6 +91,7 @@ def test_bureau_central_document_requires_complete_data(client):
         "suppleant_central_1": "نائب 1",
         "suppleant_central_2": "نائب 2",
         "suppleant_central_3": "نائب 3",
+        **CENTRAL_CIN_FIELDS,
     }
     client.put(f"/api/bureaux-centraux/{central['id']}", json=complete_payload)
 

@@ -11,8 +11,10 @@ Colonnes attendues dans la feuille de données :
     الجماعة, رقم المكتب المركزي, رئيس المكتب المركزي,
     عنوان المكتب المركزي (optionnelle),
     نائب رئيس المكتب المركزي (optionnelle),
-    العضو الأول, العضو الثاني, العضو الثالث (optionnelles),
-    نائب العضو الأول, نائب العضو الثاني, نائب العضو الثالث (optionnelles)
+    العضو الأول, العضو الثاني, العضو الثالث/كاتب (optionnelles),
+    نائب العضو الأول, نائب العضو الثاني, نائب العضو الثالث/الكاتب (optionnelles),
+    رقم البطاقة الوطنية - ... pour chaque personne (optionnelles, mais
+    requises pour pouvoir générer l'arrêté, voir word_merge.py)
 
 Si les en-têtes de votre fichier diffèrent de cette liste, adaptez
 `COLUMN_MAP` ci-dessous en conséquence.
@@ -38,6 +40,14 @@ COLUMN_MAP = {
     "نائب العضو الأول": "suppleant_central_1",
     "نائب العضو الثاني": "suppleant_central_2",
     "نائب العضو الثالث": "suppleant_central_3",
+    "رقم البطاقة الوطنية - الرئيس": "president_cin",
+    "رقم البطاقة الوطنية - نائب الرئيس": "vice_president_cin",
+    "رقم البطاقة الوطنية - العضو الأول": "membre_central_1_cin",
+    "رقم البطاقة الوطنية - العضو الثاني": "membre_central_2_cin",
+    "رقم البطاقة الوطنية - كاتب": "membre_central_3_cin",
+    "رقم البطاقة الوطنية - نائب العضو الأول": "suppleant_central_1_cin",
+    "رقم البطاقة الوطنية - نائب العضو الثاني": "suppleant_central_2_cin",
+    "رقم البطاقة الوطنية - نائب الكاتب": "suppleant_central_3_cin",
 }
 
 REQUIRED_FIELDS = ["commune", "numero_bureau_central", "president_bureau_central"]

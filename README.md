@@ -122,12 +122,20 @@ appels `/api/*` vers `http://localhost:8000` (voir `vite.config.ts`).
      central qui n'existe pas encore est créé directement à partir de ce
      fichier, sans dépendre d'un import préalable des bureaux de vote.
    Un badge *À compléter* / *Complet* indique si l'arrêté peut être généré.
-4. **Générer les arrêtés** :
+4. **Compléter le CIN de chaque personne** : depuis le modèle Word du
+   19/09/2026, chaque personne (président, vice-président, 3 membres, 3
+   suppléants) doit avoir son numéro de carte d'identité nationale (CIN)
+   pour que l'arrêté — ordinaire ou central — puisse être généré. C'est une
+   donnée absente du fichier Excel actuel : elle se saisit via *Modifier*
+   (ou un futur import Excel étendu, voir plus bas). Un badge *Complet* /
+   *CIN manquant(s)* indique le statut sur les deux tableaux.
+5. **Générer les arrêtés** :
    - Depuis une ligne du tableau : boutons *Word* / *PDF* pour un
-     téléchargement unitaire.
+     téléchargement unitaire (désactivés tant que le CIN de chaque personne
+     n'est pas renseigné).
    - *Générer tout (Word)* / *Générer tout (PDF)* : télécharge une archive
-     ZIP contenant l'arrêté de chaque bureau (les bureaux centraux
-     incomplets sont ignorés et comptabilisés).
+     ZIP contenant l'arrêté de chaque bureau complet (les bureaux dont un
+     CIN manque sont ignorés et comptabilisés).
 
 ## Import dédié des bureaux centraux
 
@@ -147,8 +155,9 @@ dédié à ces bureaux. Colonnes attendues dans la feuille de données
 |----------------------------------------|-------------------------------|
 | عنوان المكتب المركزي                  | Adresse                       |
 | نائب رئيس المكتب المركزي              | Vice-président                |
-| العضو الأول / الثاني / الثالث         | Membres 1 à 3                 |
-| نائب العضو الأول / الثاني / الثالث    | Suppléants 1 à 3               |
+| العضو الأول / الثاني / كاتب           | Membres 1, 2 et 3 (clerc)     |
+| نائب العضو الأول / الثاني / نائب الكاتب | Suppléants 1, 2 et 3        |
+| رقم البطاقة الوطنية - الرئيس / نائب الرئيس / العضو الأول / العضو الثاني / كاتب / نائب العضو الأول / نائب العضو الثاني / نائب الكاتب | CIN de chaque personne (8 colonnes) |
 
 Le rapprochement se fait par (commune, numéro de bureau central) : une
 fiche existante (même auto-créée en stub) est complétée/mise à jour, une
@@ -161,14 +170,36 @@ ce sont des colonnes déjà présentes dans le modèle `BureauCentral`).
 
 ## Décisions de conception importantes
 
-- **Deux modèles de documents** : le fichier Word officiel fourni contient
-  deux arrêtés types (bureaux de vote ordinaires et bureaux de vote
-  centraux — ce dernier correspond au modèle `Rapport_bureaux_centreux.docx`
-  fourni séparément). Ils ont été convertis en deux modèles `docxtpl`
-  distincts (`backend/app/templates_word/bureau_ordinaire.docx` et
-  `bureau_central.docx`) en remplaçant les pointillés du modèle par des
-  variables Jinja (`{{ president }}`, `{{ numero_bureau }}`, etc.), tout en
-  conservant la mise en forme, l'en-tête et le logo institutionnel d'origine.
+- **Deux modèles de documents, mis à jour le 19/09/2026** : le fichier Word
+  officiel fourni contient deux arrêtés types (bureaux de vote ordinaires et
+  bureaux de vote centraux). La version actuelle des deux modèles
+  `docxtpl` (`backend/app/templates_word/bureau_ordinaire.docx` et
+  `bureau_central.docx`) est générée depuis le modèle officiel daté du
+  19/09/2026, qui a introduit deux changements structurels par rapport à la
+  version précédente :
+  - chaque personne (président, vice-président, 3 membres, 3 suppléants)
+    porte désormais la mention "الحامل لبطاقة التعريف الوطنية رقم ..."
+    (numéro de CIN) ;
+  - le 3ᵉ membre/suppléant est désormais désigné "كاتب" / "نائب الكاتب"
+    (clerc) plutôt qu'un "3ᵉ membre" générique — conservé en base sous les
+    noms de colonnes `membre_3`/`suppleant_3` pour ne pas perturber les
+    données déjà importées, seul le libellé affiché a changé.
+  Les pointillés du modèle ont été remplacés par des variables Jinja
+  (`{{ president }}`, `{{ president_cin }}`, etc.), en conservant la mise en
+  forme, l'en-tête et le logo institutionnel d'origine. Le paragraphe
+  introductif du Wali ("إن والي جهة...") reste un texte fixe, identique au
+  modèle officiel : ni la date du scrutin ni l'identité du Wali ne sont
+  actuellement des champs dynamiques, ce point n'étant pas marqué comme tel
+  dans le modèle fourni.
+- **CIN obligatoire avant génération, pas à la création** : le numéro de
+  CIN de chaque personne est une donnée entièrement nouvelle, absente du
+  fichier Excel principal actuel et des bureaux déjà importés. Il est donc
+  stocké en base comme optionnel (comme l'adresse ou le vice-président des
+  bureaux centraux), mais requis pour générer un arrêté — ordinaire ou
+  central : les boutons Word/PDF sont désactivés et la génération en masse
+  ignore silencieusement (en le comptabilisant) tout bureau où un CIN
+  manque, avec un message d'erreur listant précisément les champs
+  manquants.
 - **Bureaux centraux = fiches à compléter (ou import dédié)** : le fichier
   Excel principal ne contient, pour chaque bureau central, que son numéro et
   le nom de son président (ces informations apparaissent répétées sur

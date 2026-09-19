@@ -6,6 +6,15 @@ fichier `Base_Fusion_Bureaux_Vote.xlsx`) :
     رقم المكتب المركزي, رئيس المكتب المركزي,
     العضو الأول, العضو الثاني, العضو الثالث,
     نائب العضو الأول, نائب العضو الثاني, نائب العضو الثالث
+
+Colonnes optionnelles pour le numéro de la carte d'identité nationale (CIN)
+de chaque personne (introduites avec le modèle Word du 19/09/2026) :
+    رقم البطاقة الوطنية - الرئيس, رقم البطاقة الوطنية - نائب الرئيس,
+    رقم البطاقة الوطنية - العضو الأول/الثاني/كاتب,
+    رقم البطاقة الوطنية - نائب العضو الأول/الثاني/الكاتب
+Ces colonnes ne sont pas obligatoires : le fichier Excel principal actuel
+n'en contient pas, et le CIN peut être complété plus tard via le formulaire.
+Il reste néanmoins requis pour pouvoir générer l'arrêté (voir word_merge.py).
 """
 
 import io
@@ -17,7 +26,7 @@ from app.models.bureau_central import BureauCentral
 from app.models.bureau_vote import BureauVote
 from app.schemas.import_report import ImportReport, ImportRowError
 
-COLUMN_MAP = {
+CORE_COLUMN_MAP = {
     "الرئيس": "president",
     "نائب الرئيس": "vice_president",
     "رقم مكتب التصويت": "numero_bureau",
@@ -33,7 +42,20 @@ COLUMN_MAP = {
     "نائب العضو الثالث": "suppleant_3",
 }
 
-REQUIRED_FIELDS = list(COLUMN_MAP.values())
+CIN_COLUMN_MAP = {
+    "رقم البطاقة الوطنية - الرئيس": "president_cin",
+    "رقم البطاقة الوطنية - نائب الرئيس": "vice_president_cin",
+    "رقم البطاقة الوطنية - العضو الأول": "membre_1_cin",
+    "رقم البطاقة الوطنية - العضو الثاني": "membre_2_cin",
+    "رقم البطاقة الوطنية - كاتب": "membre_3_cin",
+    "رقم البطاقة الوطنية - نائب العضو الأول": "suppleant_1_cin",
+    "رقم البطاقة الوطنية - نائب العضو الثاني": "suppleant_2_cin",
+    "رقم البطاقة الوطنية - نائب الكاتب": "suppleant_3_cin",
+}
+
+COLUMN_MAP = {**CORE_COLUMN_MAP, **CIN_COLUMN_MAP}
+REQUIRED_FIELDS = list(CORE_COLUMN_MAP.values())
+OPTIONAL_FIELDS = list(CIN_COLUMN_MAP.values())
 
 PREFERRED_SHEET_NAME = "Donnees_Fusion"
 
@@ -63,7 +85,7 @@ def import_excel_file(db: Session, file_bytes: bytes) -> ImportReport:
     header_row = [c.value for c in ws[1]]
     header_index = {name: idx for idx, name in enumerate(header_row) if name in COLUMN_MAP}
 
-    missing_columns = [h for h in COLUMN_MAP if h not in header_index]
+    missing_columns = [h for h in CORE_COLUMN_MAP if h not in header_index]
     if missing_columns:
         raise ValueError(
             "Colonnes manquantes dans le fichier Excel : " + ", ".join(missing_columns)
@@ -86,8 +108,8 @@ def import_excel_file(db: Session, file_bytes: bytes) -> ImportReport:
 
         record: dict[str, str | None] = {}
         for header, field in COLUMN_MAP.items():
-            col = header_index[header]
-            record[field] = _clean(values[col]) if col < len(values) else None
+            col = header_index.get(header)
+            record[field] = _clean(values[col]) if col is not None and col < len(values) else None
 
         row_errors = [field for field in REQUIRED_FIELDS if not record.get(field)]
         if row_errors:
@@ -111,8 +133,11 @@ def import_excel_file(db: Session, file_bytes: bytes) -> ImportReport:
             .one_or_none()
         )
         if existing:
-            for field, value in record.items():
-                setattr(existing, field, value)
+            for field in REQUIRED_FIELDS:
+                setattr(existing, field, record[field])
+            for field in OPTIONAL_FIELDS:
+                if record.get(field):
+                    setattr(existing, field, record[field])
             updated += 1
         else:
             db.add(BureauVote(**record))

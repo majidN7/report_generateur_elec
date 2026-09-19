@@ -18,18 +18,29 @@ class BureauVote(Base):
     commune: Mapped[str] = mapped_column(String(255), index=True)
     adresse_bureau: Mapped[str] = mapped_column(String(500))
     president: Mapped[str] = mapped_column(String(255))
+    president_cin: Mapped[str | None] = mapped_column(String(50), nullable=True)
     vice_president: Mapped[str] = mapped_column(String(255))
+    vice_president_cin: Mapped[str | None] = mapped_column(String(50), nullable=True)
 
     numero_bureau_central: Mapped[str] = mapped_column(String(50), index=True)
     president_bureau_central: Mapped[str] = mapped_column(String(255))
     adresse_bureau_central: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
+    # membre_3 / suppleant_3 correspondent au rôle "كاتب" (clerc/secrétaire)
+    # dans le modèle Word du 19/09/2026, conservés sous ce nom de colonne pour
+    # ne pas casser les données déjà importées.
     membre_1: Mapped[str] = mapped_column(String(255))
+    membre_1_cin: Mapped[str | None] = mapped_column(String(50), nullable=True)
     membre_2: Mapped[str] = mapped_column(String(255))
+    membre_2_cin: Mapped[str | None] = mapped_column(String(50), nullable=True)
     membre_3: Mapped[str] = mapped_column(String(255))
+    membre_3_cin: Mapped[str | None] = mapped_column(String(50), nullable=True)
     suppleant_1: Mapped[str] = mapped_column(String(255))
+    suppleant_1_cin: Mapped[str | None] = mapped_column(String(50), nullable=True)
     suppleant_2: Mapped[str] = mapped_column(String(255))
+    suppleant_2_cin: Mapped[str | None] = mapped_column(String(50), nullable=True)
     suppleant_3: Mapped[str] = mapped_column(String(255))
+    suppleant_3_cin: Mapped[str | None] = mapped_column(String(50), nullable=True)
 
     numero_decision: Mapped[str | None] = mapped_column(String(50), nullable=True)
     date_signature: Mapped[str | None] = mapped_column(String(100), nullable=True)

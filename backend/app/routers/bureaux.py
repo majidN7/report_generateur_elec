@@ -162,7 +162,11 @@ def download_document(bureau_id: int, format: str = Query("docx", pattern="^(doc
     if not bureau:
         raise HTTPException(status_code=404, detail="Bureau de vote introuvable")
 
-    docx_bytes = word_merge.render_bureau_vote_docx(bureau)
+    try:
+        docx_bytes = word_merge.render_bureau_vote_docx(bureau)
+    except word_merge.MissingFieldsError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
     if format == "docx":
         filename = word_merge.bureau_vote_filename(bureau, "docx")
         return _stream(docx_bytes, DOCX_MEDIA_TYPE, filename)
@@ -191,8 +195,13 @@ def generate_batch(
         raise HTTPException(status_code=404, detail="Aucun bureau de vote à générer")
 
     files: list[tuple[str, bytes]] = []
+    skipped: list[str] = []
     for bureau in bureaux:
-        docx_bytes = word_merge.render_bureau_vote_docx(bureau)
+        try:
+            docx_bytes = word_merge.render_bureau_vote_docx(bureau)
+        except word_merge.MissingFieldsError:
+            skipped.append(f"{bureau.commune} / {bureau.numero_bureau}")
+            continue
         if format == "docx":
             files.append((word_merge.bureau_vote_filename(bureau, "docx"), docx_bytes))
         else:
@@ -202,5 +211,14 @@ def generate_batch(
                 raise HTTPException(status_code=500, detail=str(exc)) from exc
             files.append((word_merge.bureau_vote_filename(bureau, "pdf"), pdf_bytes))
 
+    if not files:
+        raise HTTPException(
+            status_code=422,
+            detail="Aucun bureau de vote complet à générer (CIN manquants pour tous)",
+        )
+
     zip_bytes = word_merge.build_zip(files)
-    return _stream(zip_bytes, ZIP_MEDIA_TYPE, "arretes_bureaux_vote.zip")
+    response = _stream(zip_bytes, ZIP_MEDIA_TYPE, "arretes_bureaux_vote.zip")
+    if skipped:
+        response.headers["X-Skipped-Incomplete"] = str(len(skipped))
+    return response

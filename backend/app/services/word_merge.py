@@ -57,11 +57,28 @@ def _render_docx(template_path: Path, context: dict) -> bytes:
     return buf.getvalue()
 
 
+REQUIRED_VOTE_CIN_FIELDS = {
+    "president_cin": "CIN du président",
+    "vice_president_cin": "CIN du vice-président",
+    "membre_1_cin": "CIN du membre 1 (عضو أول)",
+    "membre_2_cin": "CIN du membre 2 (عضو ثاني)",
+    "membre_3_cin": "CIN du membre 3 / كاتب",
+    "suppleant_1_cin": "CIN du suppléant 1",
+    "suppleant_2_cin": "CIN du suppléant 2",
+    "suppleant_3_cin": "CIN du suppléant 3 / نائب الكاتب",
+}
+
+
 def bureau_vote_context(bureau: BureauVote) -> dict:
+    missing = [label for field, label in REQUIRED_VOTE_CIN_FIELDS.items() if not getattr(bureau, field)]
+    if missing:
+        raise MissingFieldsError(missing)
+
     return {
         "numero_decision": bureau.numero_decision or str(bureau.id),
         "date_signature": bureau.date_signature or default_date_signature(),
         "president": bureau.president,
+        "president_cin": bureau.president_cin,
         "numero_bureau": bureau.numero_bureau,
         "commune": bureau.commune,
         "adresse_bureau": bureau.adresse_bureau,
@@ -69,12 +86,19 @@ def bureau_vote_context(bureau: BureauVote) -> dict:
         "president_bureau_central": bureau.president_bureau_central,
         "adresse_bureau_central": bureau.adresse_bureau_central or bureau.adresse_bureau,
         "vice_president": bureau.vice_president,
+        "vice_president_cin": bureau.vice_president_cin,
         "membre_1": bureau.membre_1,
+        "membre_1_cin": bureau.membre_1_cin,
         "membre_2": bureau.membre_2,
+        "membre_2_cin": bureau.membre_2_cin,
         "membre_3": bureau.membre_3,
+        "membre_3_cin": bureau.membre_3_cin,
         "suppleant_1": bureau.suppleant_1,
+        "suppleant_1_cin": bureau.suppleant_1_cin,
         "suppleant_2": bureau.suppleant_2,
+        "suppleant_2_cin": bureau.suppleant_2_cin,
         "suppleant_3": bureau.suppleant_3,
+        "suppleant_3_cin": bureau.suppleant_3_cin,
     }
 
 
@@ -95,6 +119,14 @@ REQUIRED_CENTRAL_FIELDS = {
     "suppleant_central_1": "Suppléant 1",
     "suppleant_central_2": "Suppléant 2",
     "suppleant_central_3": "Suppléant 3",
+    "president_cin": "CIN du président",
+    "vice_president_cin": "CIN du vice-président",
+    "membre_central_1_cin": "CIN du membre 1 (عضو أول)",
+    "membre_central_2_cin": "CIN du membre 2 (عضو ثاني)",
+    "membre_central_3_cin": "CIN du membre 3 / كاتب",
+    "suppleant_central_1_cin": "CIN du suppléant 1",
+    "suppleant_central_2_cin": "CIN du suppléant 2",
+    "suppleant_central_3_cin": "CIN du suppléant 3 / نائب الكاتب",
 }
 
 
@@ -107,16 +139,24 @@ def bureau_central_context(bureau: BureauCentral) -> dict:
         "numero_decision": bureau.numero_decision or str(bureau.id),
         "date_signature": bureau.date_signature or default_date_signature(),
         "president_bureau_central": bureau.president_bureau_central,
+        "president_cin": bureau.president_cin,
         "numero_bureau_central": bureau.numero_bureau_central,
         "commune": bureau.commune,
         "adresse_bureau_central": bureau.adresse_bureau_central,
         "vice_president_bureau_central": bureau.vice_president_bureau_central,
+        "vice_president_cin": bureau.vice_president_cin,
         "membre_central_1": bureau.membre_central_1,
+        "membre_central_1_cin": bureau.membre_central_1_cin,
         "membre_central_2": bureau.membre_central_2,
+        "membre_central_2_cin": bureau.membre_central_2_cin,
         "membre_central_3": bureau.membre_central_3,
+        "membre_central_3_cin": bureau.membre_central_3_cin,
         "suppleant_central_1": bureau.suppleant_central_1,
+        "suppleant_central_1_cin": bureau.suppleant_central_1_cin,
         "suppleant_central_2": bureau.suppleant_central_2,
+        "suppleant_central_2_cin": bureau.suppleant_central_2_cin,
         "suppleant_central_3": bureau.suppleant_central_3,
+        "suppleant_central_3_cin": bureau.suppleant_central_3_cin,
     }
 
 

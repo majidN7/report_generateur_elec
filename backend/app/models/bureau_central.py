@@ -25,15 +25,25 @@ class BureauCentral(Base):
     numero_bureau_central: Mapped[str] = mapped_column(String(50), index=True)
     commune: Mapped[str] = mapped_column(String(255), index=True)
     president_bureau_central: Mapped[str] = mapped_column(String(255))
+    president_cin: Mapped[str | None] = mapped_column(String(50), nullable=True)
     adresse_bureau_central: Mapped[str | None] = mapped_column(String(500), nullable=True)
     vice_president_bureau_central: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    vice_president_cin: Mapped[str | None] = mapped_column(String(50), nullable=True)
 
+    # membre_central_3 / suppleant_central_3 correspondent au rôle "كاتب"
+    # (clerc/secrétaire) dans le modèle Word du 19/09/2026.
     membre_central_1: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    membre_central_1_cin: Mapped[str | None] = mapped_column(String(50), nullable=True)
     membre_central_2: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    membre_central_2_cin: Mapped[str | None] = mapped_column(String(50), nullable=True)
     membre_central_3: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    membre_central_3_cin: Mapped[str | None] = mapped_column(String(50), nullable=True)
     suppleant_central_1: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    suppleant_central_1_cin: Mapped[str | None] = mapped_column(String(50), nullable=True)
     suppleant_central_2: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    suppleant_central_2_cin: Mapped[str | None] = mapped_column(String(50), nullable=True)
     suppleant_central_3: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    suppleant_central_3_cin: Mapped[str | None] = mapped_column(String(50), nullable=True)
 
     numero_decision: Mapped[str | None] = mapped_column(String(50), nullable=True)
     date_signature: Mapped[str | None] = mapped_column(String(100), nullable=True)
