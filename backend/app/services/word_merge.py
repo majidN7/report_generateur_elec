@@ -58,8 +58,6 @@ def _render_docx(template_path: Path, context: dict) -> bytes:
 
 
 REQUIRED_VOTE_FIELDS = {
-    "numero_bureau_central": "Numéro du bureau central de rattachement",
-    "president_bureau_central": "Président du bureau central de rattachement",
     "president_cin": "CIN du président",
     "vice_president_cin": "CIN du vice-président",
     "membre_1_cin": "CIN du membre 1 (عضو أول)",
@@ -77,16 +75,14 @@ def bureau_vote_context(bureau: BureauVote) -> dict:
         raise MissingFieldsError(missing)
 
     return {
-        "numero_decision": bureau.numero_decision or str(bureau.id),
+        # Le numéro de décision ("قرار عاملي رقم .........../2026") reste un
+        # texte fixe dans le modèle officiel : il n'est ni lu ni injecté ici.
         "date_signature": bureau.date_signature or default_date_signature(),
         "president": bureau.president,
         "president_cin": bureau.president_cin,
         "numero_bureau": bureau.numero_bureau,
         "commune": bureau.commune,
         "adresse_bureau": bureau.adresse_bureau,
-        "numero_bureau_central": bureau.numero_bureau_central,
-        "president_bureau_central": bureau.president_bureau_central,
-        "adresse_bureau_central": bureau.adresse_bureau_central or bureau.adresse_bureau,
         "vice_president": bureau.vice_president,
         "vice_president_cin": bureau.vice_president_cin,
         "membre_1": bureau.membre_1,
@@ -138,7 +134,8 @@ def bureau_central_context(bureau: BureauCentral) -> dict:
         raise MissingFieldsError(missing)
 
     return {
-        "numero_decision": bureau.numero_decision or str(bureau.id),
+        # Le numéro de décision reste un texte fixe dans le modèle officiel,
+        # voir la remarque équivalente dans bureau_vote_context ci-dessus.
         "date_signature": bureau.date_signature or default_date_signature(),
         "president_bureau_central": bureau.president_bureau_central,
         "president_cin": bureau.president_cin,

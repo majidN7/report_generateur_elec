@@ -9,7 +9,7 @@ interface BureauFormProps {
 }
 
 const CIN_HINT = "(CIN — requis pour générer le document)"
-const LINK_HINT = "(optionnel à l'import, requis pour générer le document)"
+const LINK_HINT = "(optionnel, informatif — ne figure plus dans l'arrêté officiel)"
 
 const FIELDS: { name: keyof BureauVoteInput; label: string; required: boolean }[] = [
   { name: "commune", label: "الجماعة (Commune)", required: true },
@@ -25,7 +25,7 @@ const FIELDS: { name: keyof BureauVoteInput; label: string; required: boolean }[
     label: `رئيس المكتب المركزي (Président bureau central) ${LINK_HINT}`,
     required: false,
   },
-  { name: "adresse_bureau_central", label: "عنوان المكتب المركزي (optionnel, sinon = adresse du bureau)", required: false },
+  { name: "adresse_bureau_central", label: `عنوان المكتب المركزي ${LINK_HINT}`, required: false },
   { name: "membre_1", label: "عضو أول (Membre 1)", required: true },
   { name: "membre_1_cin", label: `بطاقة التعريف الوطنية - العضو الأول ${CIN_HINT}`, required: false },
   { name: "membre_2", label: "عضو ثاني (Membre 2)", required: true },
@@ -38,7 +38,6 @@ const FIELDS: { name: keyof BureauVoteInput; label: string; required: boolean }[
   { name: "suppleant_2_cin", label: `بطاقة التعريف الوطنية - نائب العضو الثاني ${CIN_HINT}`, required: false },
   { name: "suppleant_3", label: "نائب الكاتب (Suppléant 3 / Clerc)", required: true },
   { name: "suppleant_3_cin", label: `بطاقة التعريف الوطنية - نائب الكاتب ${CIN_HINT}`, required: false },
-  { name: "numero_decision", label: "رقم القرار (optionnel)", required: false },
   { name: "date_signature", label: "تاريخ التوقيع (optionnel)", required: false },
 ]
 
@@ -46,7 +45,6 @@ const NULLABLE_FIELDS: (keyof BureauVoteInput)[] = [
   "numero_bureau_central",
   "president_bureau_central",
   "adresse_bureau_central",
-  "numero_decision",
   "date_signature",
   "president_cin",
   "vice_president_cin",
@@ -81,7 +79,6 @@ const EMPTY: BureauVoteInput = {
   suppleant_2_cin: "",
   suppleant_3: "",
   suppleant_3_cin: "",
-  numero_decision: "",
   date_signature: "",
 }
 
@@ -111,7 +108,6 @@ export function BureauForm({ initial, onSubmit, onCancel }: BureauFormProps) {
           suppleant_2_cin: initial.suppleant_2_cin ?? "",
           suppleant_3: initial.suppleant_3,
           suppleant_3_cin: initial.suppleant_3_cin ?? "",
-          numero_decision: initial.numero_decision ?? "",
           date_signature: initial.date_signature ?? "",
         }
       : EMPTY

@@ -29,7 +29,9 @@ class BureauVoteBase(BaseModel):
     suppleant_3: str = Field(..., min_length=1, max_length=255)
     suppleant_3_cin: str | None = Field(None, max_length=50)
 
-    numero_decision: str | None = Field(None, max_length=50)
+    # Le numéro de décision ("قرار عاملي رقم .........../2026") est un texte
+    # fixe du modèle officiel : volontairement absent de ce schéma pour
+    # qu'il ne puisse jamais être défini via l'API ou les formulaires.
     date_signature: str | None = Field(None, max_length=100)
 
 
@@ -60,7 +62,6 @@ class BureauVoteUpdate(BaseModel):
     suppleant_2_cin: str | None = Field(None, max_length=50)
     suppleant_3: str | None = Field(None, min_length=1, max_length=255)
     suppleant_3_cin: str | None = Field(None, max_length=50)
-    numero_decision: str | None = Field(None, max_length=50)
     date_signature: str | None = Field(None, max_length=100)
 
 

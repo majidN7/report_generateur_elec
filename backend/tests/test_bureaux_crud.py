@@ -77,3 +77,18 @@ def test_delete_all_bureaux_when_empty(client):
     response = client.delete("/api/bureaux/all")
     assert response.status_code == 200
     assert response.json()["deleted"] == 0
+
+
+def test_numero_decision_cannot_be_set_via_api(client):
+    """قرار عاملي رقم .........../2026 must stay a static, non-fillable
+    header: the API silently ignores any numero_decision sent in the
+    payload (it is not part of the schema)."""
+    payload = dict(SAMPLE, numero_decision="1234")
+    create_resp = client.post("/api/bureaux", json=payload)
+    assert create_resp.status_code == 201
+    assert "numero_decision" not in create_resp.json()
+
+    bureau_id = create_resp.json()["id"]
+    update_resp = client.put(f"/api/bureaux/{bureau_id}", json={"numero_decision": "5678"})
+    assert update_resp.status_code == 200
+    assert "numero_decision" not in update_resp.json()

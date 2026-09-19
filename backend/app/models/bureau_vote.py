@@ -47,6 +47,11 @@ class BureauVote(Base):
     suppleant_3: Mapped[str] = mapped_column(String(255))
     suppleant_3_cin: Mapped[str | None] = mapped_column(String(50), nullable=True)
 
+    # numero_decision : colonne conservée pour compatibilité mais inutilisée
+    # — le numéro de décision ("قرار عاملي رقم .........../2026") est un
+    # texte fixe du modèle officiel, volontairement absent des schémas
+    # Pydantic et du contexte docxtpl (word_merge.py) pour qu'il ne puisse
+    # jamais être renseigné via l'API ou l'interface.
     numero_decision: Mapped[str | None] = mapped_column(String(50), nullable=True)
     date_signature: Mapped[str | None] = mapped_column(String(100), nullable=True)
 

@@ -45,6 +45,8 @@ class BureauCentral(Base):
     suppleant_central_3: Mapped[str | None] = mapped_column(String(255), nullable=True)
     suppleant_central_3_cin: Mapped[str | None] = mapped_column(String(50), nullable=True)
 
+    # numero_decision : colonne conservée pour compatibilité mais inutilisée,
+    # voir la remarque équivalente dans bureau_vote.py.
     numero_decision: Mapped[str | None] = mapped_column(String(50), nullable=True)
     date_signature: Mapped[str | None] = mapped_column(String(100), nullable=True)
 

@@ -23,10 +23,11 @@ import { useToast } from "../components/ToastProvider"
 const PAGE_SIZE = 15
 
 function isComplete(b: BureauVote): boolean {
+  // Le modèle Word officiel de l'arrêté ordinaire ne référence plus le
+  // bureau central de rattachement : seul le CIN de chaque personne
+  // conditionne la génération du document.
   return Boolean(
-    b.numero_bureau_central &&
-      b.president_bureau_central &&
-      b.president_cin &&
+    b.president_cin &&
       b.vice_president_cin &&
       b.membre_1_cin &&
       b.membre_2_cin &&

@@ -30,7 +30,6 @@ const FIELDS: { name: keyof BureauCentralInput; label: string; required: boolean
   { name: "suppleant_central_2_cin", label: `رقم البطاقة الوطنية - نائب العضو الثاني ${CIN_HINT}`, required: false },
   { name: "suppleant_central_3", label: "نائب الكاتب (Suppléant 3 / Clerc)", required: false },
   { name: "suppleant_central_3_cin", label: `رقم البطاقة الوطنية - نائب الكاتب ${CIN_HINT}`, required: false },
-  { name: "numero_decision", label: "رقم القرار (optionnel)", required: false },
   { name: "date_signature", label: "تاريخ التوقيع (optionnel)", required: false },
 ]
 
@@ -54,7 +53,6 @@ const EMPTY: BureauCentralInput = {
   suppleant_central_2_cin: "",
   suppleant_central_3: "",
   suppleant_central_3_cin: "",
-  numero_decision: "",
   date_signature: "",
 }
 
@@ -81,7 +79,6 @@ export function BureauCentralForm({ initial, onSubmit, onCancel }: BureauCentral
           suppleant_central_2_cin: initial.suppleant_central_2_cin ?? "",
           suppleant_central_3: initial.suppleant_central_3 ?? "",
           suppleant_central_3_cin: initial.suppleant_central_3_cin ?? "",
-          numero_decision: initial.numero_decision ?? "",
           date_signature: initial.date_signature ?? "",
         }
       : EMPTY

@@ -23,7 +23,8 @@ class BureauCentralBase(BaseModel):
     suppleant_central_2_cin: str | None = Field(None, max_length=50)
     suppleant_central_3: str | None = Field(None, max_length=255)
     suppleant_central_3_cin: str | None = Field(None, max_length=50)
-    numero_decision: str | None = Field(None, max_length=50)
+    # Le numéro de décision reste un texte fixe du modèle officiel :
+    # volontairement absent de ce schéma (voir bureau_vote.py).
     date_signature: str | None = Field(None, max_length=100)
 
 
@@ -51,7 +52,6 @@ class BureauCentralUpdate(BaseModel):
     suppleant_central_2_cin: str | None = Field(None, max_length=50)
     suppleant_central_3: str | None = Field(None, max_length=255)
     suppleant_central_3_cin: str | None = Field(None, max_length=50)
-    numero_decision: str | None = Field(None, max_length=50)
     date_signature: str | None = Field(None, max_length=100)
 
 

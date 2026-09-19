@@ -3,6 +3,7 @@ import zipfile
 from io import BytesIO
 
 import pytest
+from docx import Document
 
 from tests.test_bureaux_crud import SAMPLE
 
@@ -45,6 +46,23 @@ def test_generate_bureau_docx(client):
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("application/vnd.openxmlformats")
     assert len(response.content) > 1000
+
+
+def test_generated_docx_keeps_decision_header_static(client):
+    """قرار عاملي رقم .........../2026 must appear byte-for-byte unchanged
+    in the generated document, even when a numero_decision was (uselessly)
+    sent in the create payload -- it's ignored by the schema and there is
+    no template field for it."""
+    payload = dict(SAMPLE_WITH_CIN, numero_decision="9999")
+    bureau_id = client.post("/api/bureaux", json=payload).json()["id"]
+
+    response = client.get(f"/api/bureaux/{bureau_id}/document?format=docx")
+    assert response.status_code == 200
+
+    doc = Document(BytesIO(response.content))
+    header_paragraph = doc.paragraphs[0].text
+    assert header_paragraph == "قرار عاملي رقم .........../2026"
+    assert "9999" not in header_paragraph
 
 
 @pytest.mark.skipif(not SOFFICE_AVAILABLE, reason="LibreOffice n'est pas installé")

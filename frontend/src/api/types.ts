@@ -22,7 +22,9 @@ export interface BureauVote {
   suppleant_2_cin: string | null
   suppleant_3: string
   suppleant_3_cin: string | null
-  numero_decision: string | null
+  // Le numéro de décision ("قرار عاملي رقم .........../2026") est un texte
+  // fixe du modèle officiel : volontairement absent de l'API, jamais
+  // modifiable depuis l'interface.
   date_signature: string | null
   created_at: string
   updated_at: string
@@ -58,7 +60,7 @@ export interface BureauCentral {
   suppleant_central_2_cin: string | null
   suppleant_central_3: string | null
   suppleant_central_3_cin: string | null
-  numero_decision: string | null
+  // Idem BureauVote : numéro de décision fixe, absent de l'API.
   date_signature: string | null
   created_at: string
   updated_at: string

@@ -124,23 +124,26 @@ appels `/api/*` vers `http://localhost:8000` (voir `vite.config.ts`).
    - ou manuellement, via *+ Ajouter un bureau central* / *Modifier* dans
      l'onglet *Bureaux centraux*.
    Un badge *À compléter* / *Complet* indique si l'arrêté peut être généré.
-4. **Compléter le CIN et le rattachement au bureau central** : depuis le
-   modèle Word du 19/09/2026, chaque personne (président, vice-président, 3
+4. **Compléter le CIN** : chaque personne (président, vice-président, 3
    membres, 3 suppléants) doit avoir son numéro de carte d'identité
    nationale (CIN) pour que l'arrêté — ordinaire ou central — puisse être
-   généré. De plus, l'import des bureaux de vote (quel que soit le format)
-   ne fournit plus le numéro et le président du bureau central de
-   rattachement (رقم المكتب المركزي / رئيس المكتب المركزي) : ces deux
-   champs, comme le CIN, se saisissent via *Modifier*. Un badge *Complet* /
-   *À compléter* indique le statut sur les deux tableaux.
+   généré ; ça se saisit via *Modifier*. Un badge *Complet* / *À compléter*
+   indique le statut sur les deux tableaux. (Le numéro et le président du
+   bureau central de rattachement — رقم المكتب المركزي / رئيس المكتب
+   المركزي — restent éditables sur la fiche du bureau de vote à titre
+   informatif, mais ne conditionnent plus rien : l'arrêté ordinaire ne les
+   mentionne plus du tout.)
 5. **Générer les arrêtés** :
    - Depuis une ligne du tableau : boutons *Word* / *PDF* pour un
      téléchargement unitaire (désactivés tant qu'il manque le CIN d'une
-     personne ou, pour un bureau ordinaire, son rattachement au bureau
-     central).
+     personne).
    - *Générer tout (Word)* / *Générer tout (PDF)* : télécharge une archive
      ZIP contenant l'arrêté de chaque bureau complet (les bureaux incomplets
      sont ignorés et comptabilisés).
+   - Le numéro de décision ("قرار عاملي رقم .........../2026") reste
+     volontairement figé dans le document généré : ni l'API ni l'interface
+     ne permettent de le renseigner (voir la décision de conception
+     dédiée).
 
 ## Formats Excel pris en charge (import principal)
 
@@ -206,27 +209,43 @@ ce sont des colonnes déjà présentes dans le modèle `BureauCentral`).
 
 ## Décisions de conception importantes
 
-- **Deux modèles de documents, mis à jour le 19/09/2026** : le fichier Word
-  officiel fourni contient deux arrêtés types (bureaux de vote ordinaires et
-  bureaux de vote centraux). La version actuelle des deux modèles
-  `docxtpl` (`backend/app/templates_word/bureau_ordinaire.docx` et
-  `bureau_central.docx`) est générée depuis le modèle officiel daté du
-  19/09/2026, qui a introduit deux changements structurels par rapport à la
-  version précédente :
+- **Deux modèles de documents, mis à jour le 19/09/2026 puis via BV.docx /
+  BVC.docx** : le fichier Word officiel fourni contient deux arrêtés types
+  (bureaux de vote ordinaires et bureaux de vote centraux). Les modèles
+  `docxtpl` actuels (`backend/app/templates_word/bureau_ordinaire.docx` et
+  `bureau_central.docx`) proviennent de `BV.docx`/`BVC.docx`, la dernière
+  version officielle, qui a introduit deux changements par rapport aux
+  versions précédentes :
   - chaque personne (président, vice-président, 3 membres, 3 suppléants)
-    porte désormais la mention "الحامل لبطاقة التعريف الوطنية رقم ..."
-    (numéro de CIN) ;
-  - le 3ᵉ membre/suppléant est désormais désigné "كاتب" / "نائب الكاتب"
-    (clerc) plutôt qu'un "3ᵉ membre" générique — conservé en base sous les
-    noms de colonnes `membre_3`/`suppleant_3` pour ne pas perturber les
-    données déjà importées, seul le libellé affiché a changé.
+    porte la mention "الحامل لبطاقة التعريف الوطنية رقم ..." (numéro de
+    CIN) ; le 3ᵉ membre/suppléant est désigné "كاتب" / "نائب الكاتب" (clerc)
+    — conservé en base sous les noms de colonnes `membre_3`/`suppleant_3`
+    pour ne pas perturber les données déjà importées, seul le libellé
+    affiché a changé ;
+  - **l'arrêté ordinaire (BV) ne mentionne plus le bureau central de
+    rattachement du tout** (la phrase "والتابع للمكتب المركزي رقم..." a
+    disparu du modèle officiel) — voir la décision dédiée ci-dessous.
   Les pointillés du modèle ont été remplacés par des variables Jinja
   (`{{ president }}`, `{{ president_cin }}`, etc.), en conservant la mise en
-  forme, l'en-tête et le logo institutionnel d'origine. Le paragraphe
-  introductif du Wali ("إن والي جهة...") reste un texte fixe, identique au
-  modèle officiel : ni la date du scrutin ni l'identité du Wali ne sont
-  actuellement des champs dynamiques, ce point n'étant pas marqué comme tel
-  dans le modèle fourni.
+  forme, l'en-tête et le logo institutionnel d'origine, **à l'exception
+  explicite du numéro de décision** (voir ci-dessous). Le paragraphe
+  introductif du Wali ("إن والي جهة...") reste également un texte fixe,
+  identique au modèle officiel : ni la date du scrutin ni l'identité du Wali
+  ne sont des champs dynamiques, ce point n'étant pas marqué comme tel dans
+  le modèle fourni.
+- **En-tête "قرار عاملي رقم .........../2026" strictement statique** : ce
+  numéro de décision n'est **ni lu, ni injecté, ni exposé** nulle part dans
+  l'application — sur demande explicite, il doit rester intact et non
+  renseignable depuis l'interface. Concrètement : le paragraphe n'a aucun
+  placeholder Jinja dans les deux modèles (les pointillés restent du texte
+  brut) ; le champ `numero_decision` a été retiré des schémas Pydantic
+  (`BureauVoteBase`/`Update`, `BureauCentralBase`/`Update`) et du contexte
+  de rendu (`word_merge.py`), donc toute valeur envoyée via l'API est
+  silencieusement ignorée (elle n'apparaît jamais dans la réponse) ; le
+  champ a aussi été retiré des deux formulaires React. La colonne
+  `numero_decision` reste présente en base (nullable, inerte) uniquement
+  par prudence vis-à-vis d'éventuelles valeurs déjà enregistrées — elle
+  n'est plus lue ni écrite par aucun chemin de code.
 - **CIN obligatoire avant génération, pas à la création** : le numéro de
   CIN de chaque personne est une donnée entièrement nouvelle, absente du
   fichier Excel principal actuel et des bureaux déjà importés. Il est donc
@@ -244,33 +263,32 @@ ce sont des colonnes déjà présentes dans le modèle `BureauCentral`).
   membres, les 3 suppléants, l'adresse ou un CIN manquent, la génération de
   l'arrêté est bloquée avec un message d'erreur explicite listant les
   champs manquants.
-- **Rattachement au bureau central retiré de l'import des bureaux de vote** :
-  le fichier `Base_Fusion_Bureaux_Vote__BV.xlsx` (format 2026) sépare les
-  bureaux ordinaires et les bureaux centraux en deux feuilles indépendantes,
-  et la feuille des bureaux ordinaires ne fournit plus رقم المكتب المركزي /
-  رئيس المكتب المركزي du tout. `numero_bureau_central` et
-  `president_bureau_central` sont donc devenus nullable sur `BureauVote`
-  (migration `d5fbabc5576b`), suivant le même principe que le CIN :
-  optionnels au stockage, mais requis pour générer l'arrêté
-  (`MissingFieldsError`, 422, message explicite). Suite à cela, l'import des
-  bureaux de vote a été simplifié pour ne plus jamais lire ces deux colonnes
-  — y compris pour l'ancien format à une seule feuille, qui les contient
-  pourtant toujours : si présentes, elles sont désormais ignorées. Ce choix
-  uniformise le comportement des deux formats (le rattachement se saisit
-  systématiquement à la main, via *Modifier*) et l'import ne crée plus de
-  fiches "bureau central" à partir de la feuille des bureaux de vote
-  (`bureaux_centraux_created` reste toujours à 0 pour cet import) : les
-  bureaux centraux s'importent désormais exclusivement via leur propre
+- **Rattachement au bureau central : ni importé, ni requis pour générer le
+  BV** : le fichier `Base_Fusion_Bureaux_Vote__BV.xlsx` (format 2026) sépare
+  les bureaux ordinaires et les bureaux centraux en deux feuilles
+  indépendantes, et la feuille des bureaux ordinaires ne fournit plus رقم
+  المكتب المركزي / رئيس المكتب المركزي du tout — un changement que le
+  modèle `BV.docx` a confirmé et rendu définitif en supprimant purement et
+  simplement la phrase "والتابع للمكتب المركزي رقم..." de l'arrêté
+  ordinaire. En conséquence :
+  - `numero_bureau_central`, `president_bureau_central` et
+    `adresse_bureau_central` sont nullable sur `BureauVote` (migration
+    `d5fbabc5576b`) et **ne conditionnent plus la génération de l'arrêté
+    ordinaire** (retirés de `REQUIRED_VOTE_FIELDS` dans `word_merge.py`,
+    seul le CIN de chaque personne reste requis) ;
+  - l'import des bureaux de vote ne lit plus jamais ces colonnes — y
+    compris pour l'ancien format à une seule feuille, qui les contient
+    pourtant toujours : si présentes, elles sont ignorées, et l'import ne
+    crée plus de fiches "bureau central" à partir de la feuille des
+    bureaux de vote (`bureaux_centraux_created` reste à 0 pour cet import) ;
+  - les trois champs restent éditables manuellement sur la fiche du bureau
+    de vote (à titre purement informatif/organisationnel, pour le
+    classement interne), mais n'apparaissent plus dans le document généré.
+  Les bureaux centraux s'importent désormais exclusivement via leur propre
   feuille/fichier dédié.
-- **Adresse du bureau central (arrêté ordinaire)** : la phrase de l'arrêté
-  ordinaire mentionne aussi le lieu du bureau central de rattachement. Par
-  défaut, l'application réutilise l'adresse du bureau de vote lui-même
-  (cas fréquent où le bureau central est colocalisé), mais ce champ est
-  éditable indépendamment sur chaque bureau de vote si nécessaire.
-- **Numéro de décision / date de signature** : absents du fichier Excel, ils
-  sont éditables par enregistrement ; à défaut, l'application utilise
-  respectivement l'identifiant interne de l'enregistrement et la date du
-  jour (au format arabe marocain, ex. "18 شتنبر 2026").
+- **Date de signature** : absente du fichier Excel, elle est éditable par
+  enregistrement ; à défaut, l'application utilise la date du jour (au
+  format arabe marocain, ex. "18 شتنبر 2026").
 - **Détection des doublons à l'import** : un bureau est identifié de façon
   unique par le couple (commune, numéro de bureau). Une ligne déjà présente
   en base est mise à jour (upsert) ; une ligne dupliquée *au sein du même

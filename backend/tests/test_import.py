@@ -78,11 +78,12 @@ def test_import_dual_sheet_format_2026(client):
     assert central["president_cin"] == "PC1"
     assert central["suppleant_central_3_cin"] == "PC8"
 
-    # generation is blocked for the ordinary bureau: CIN is complete but the
-    # central-bureau link is missing, with a clear message naming it
-    incomplete = client.get(f"/api/bureaux/{full_vote['id']}/document?format=docx")
-    assert incomplete.status_code == 422
-    assert "bureau central" in incomplete.json()["detail"]
+    # generation succeeds for the ordinary bureau despite the missing
+    # central-bureau link: the official BV template no longer references
+    # it at all, so it's not required (only CIN is)
+    complete_vote_doc = client.get(f"/api/bureaux/{full_vote['id']}/document?format=docx")
+    assert complete_vote_doc.status_code == 200
+    assert len(complete_vote_doc.content) > 1000
 
     # ... but the fully-detailed central bureau generates immediately
     central_doc = client.get(f"/api/bureaux-centraux/{central['id']}/document?format=docx")
