@@ -7,8 +7,8 @@ export interface BureauVote {
   president_cin: string | null
   vice_president: string
   vice_president_cin: string | null
-  numero_bureau_central: string
-  president_bureau_central: string
+  numero_bureau_central: string | null
+  president_bureau_central: string | null
   adresse_bureau_central: string | null
   membre_1: string
   membre_1_cin: string | null

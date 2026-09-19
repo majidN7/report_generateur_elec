@@ -24,7 +24,9 @@ const PAGE_SIZE = 15
 
 function isComplete(b: BureauVote): boolean {
   return Boolean(
-    b.president_cin &&
+    b.numero_bureau_central &&
+      b.president_bureau_central &&
+      b.president_cin &&
       b.vice_president_cin &&
       b.membre_1_cin &&
       b.membre_2_cin &&
@@ -265,7 +267,7 @@ export function BureauxPage() {
                   <td className="px-3 py-2 font-medium">{bureau.numero_bureau}</td>
                   <td className="px-3 py-2">{bureau.commune}</td>
                   <td className="px-3 py-2">{bureau.president}</td>
-                  <td className="px-3 py-2">{bureau.numero_bureau_central}</td>
+                  <td className="px-3 py-2">{bureau.numero_bureau_central || "—"}</td>
                   <td className="px-3 py-2">
                     {isComplete(bureau) ? (
                       <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-700">
@@ -273,7 +275,7 @@ export function BureauxPage() {
                       </span>
                     ) : (
                       <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-700">
-                        CIN manquant(s)
+                        À compléter
                       </span>
                     )}
                   </td>
@@ -324,9 +326,13 @@ export function BureauxPage() {
         <ImportModal
           title="Importer le fichier Excel"
           description={
-            'Sélectionnez le fichier Excel contenant la feuille "Donnees_Fusion" avec les colonnes ' +
-            "الرئيس, نائب الرئيس, رقم مكتب التصويت, الجماعة, عنوان مكتب التصويت, رقم المكتب المركزي, " +
-            "رئيس المكتب المركزي, أعضاء et نواب."
+            "Deux formats sont acceptés : l'ancien fichier à une seule feuille " +
+            '("Donnees_Fusion"), ou le nouveau modèle 2026 ("Base_Fusion_Bureaux_Vote__BV.xlsx") ' +
+            'avec ses deux feuilles séparées "رؤساء وأعضاء مكاتب التصويت" (bureaux ordinaires, ' +
+            'avec CIN) et "مكاتب التصويت المركزية" (bureaux centraux, avec CIN) — les deux sont ' +
+            "importées automatiquement en une fois. Dans ce nouveau format, le rattachement d'un " +
+            "bureau ordinaire à son bureau central n'est plus fourni : complétez-le manuellement " +
+            "si besoin, il reste requis pour générer l'arrêté."
           }
           importFn={importExcelFile}
           onClose={() => setShowImport(false)}

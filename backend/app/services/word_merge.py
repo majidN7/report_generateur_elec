@@ -57,7 +57,9 @@ def _render_docx(template_path: Path, context: dict) -> bytes:
     return buf.getvalue()
 
 
-REQUIRED_VOTE_CIN_FIELDS = {
+REQUIRED_VOTE_FIELDS = {
+    "numero_bureau_central": "Numéro du bureau central de rattachement",
+    "president_bureau_central": "Président du bureau central de rattachement",
     "president_cin": "CIN du président",
     "vice_president_cin": "CIN du vice-président",
     "membre_1_cin": "CIN du membre 1 (عضو أول)",
@@ -70,7 +72,7 @@ REQUIRED_VOTE_CIN_FIELDS = {
 
 
 def bureau_vote_context(bureau: BureauVote) -> dict:
-    missing = [label for field, label in REQUIRED_VOTE_CIN_FIELDS.items() if not getattr(bureau, field)]
+    missing = [label for field, label in REQUIRED_VOTE_FIELDS.items() if not getattr(bureau, field)]
     if missing:
         raise MissingFieldsError(missing)
 

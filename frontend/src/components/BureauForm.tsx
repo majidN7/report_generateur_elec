@@ -9,35 +9,42 @@ interface BureauFormProps {
 }
 
 const CIN_HINT = "(CIN — requis pour générer le document)"
+const LINK_HINT = "(optionnel à l'import, requis pour générer le document)"
 
 const FIELDS: { name: keyof BureauVoteInput; label: string; required: boolean }[] = [
   { name: "commune", label: "الجماعة (Commune)", required: true },
   { name: "numero_bureau", label: "رقم مكتب التصويت (N° bureau)", required: true },
   { name: "adresse_bureau", label: "عنوان مكتب التصويت (Adresse)", required: true },
   { name: "president", label: "الرئيس (Président)", required: true },
-  { name: "president_cin", label: `رقم البطاقة الوطنية - الرئيس ${CIN_HINT}`, required: false },
+  { name: "president_cin", label: `بطاقة التعريف الوطنية - الرئيس ${CIN_HINT}`, required: false },
   { name: "vice_president", label: "نائب الرئيس (Vice-président)", required: true },
-  { name: "vice_president_cin", label: `رقم البطاقة الوطنية - نائب الرئيس ${CIN_HINT}`, required: false },
-  { name: "numero_bureau_central", label: "رقم المكتب المركزي (N° bureau central)", required: true },
-  { name: "president_bureau_central", label: "رئيس المكتب المركزي (Président bureau central)", required: true },
+  { name: "vice_president_cin", label: `بطاقة التعريف الوطنية - نائب الرئيس ${CIN_HINT}`, required: false },
+  { name: "numero_bureau_central", label: `رقم المكتب المركزي (N° bureau central) ${LINK_HINT}`, required: false },
+  {
+    name: "president_bureau_central",
+    label: `رئيس المكتب المركزي (Président bureau central) ${LINK_HINT}`,
+    required: false,
+  },
   { name: "adresse_bureau_central", label: "عنوان المكتب المركزي (optionnel, sinon = adresse du bureau)", required: false },
   { name: "membre_1", label: "عضو أول (Membre 1)", required: true },
-  { name: "membre_1_cin", label: `رقم البطاقة الوطنية - العضو الأول ${CIN_HINT}`, required: false },
+  { name: "membre_1_cin", label: `بطاقة التعريف الوطنية - العضو الأول ${CIN_HINT}`, required: false },
   { name: "membre_2", label: "عضو ثاني (Membre 2)", required: true },
-  { name: "membre_2_cin", label: `رقم البطاقة الوطنية - العضو الثاني ${CIN_HINT}`, required: false },
+  { name: "membre_2_cin", label: `بطاقة التعريف الوطنية - العضو الثاني ${CIN_HINT}`, required: false },
   { name: "membre_3", label: "كاتب (Membre 3 / Clerc)", required: true },
-  { name: "membre_3_cin", label: `رقم البطاقة الوطنية - كاتب ${CIN_HINT}`, required: false },
+  { name: "membre_3_cin", label: `بطاقة التعريف الوطنية - كاتب ${CIN_HINT}`, required: false },
   { name: "suppleant_1", label: "نائب العضو الأول (Suppléant 1)", required: true },
-  { name: "suppleant_1_cin", label: `رقم البطاقة الوطنية - نائب العضو الأول ${CIN_HINT}`, required: false },
+  { name: "suppleant_1_cin", label: `بطاقة التعريف الوطنية - نائب العضو الأول ${CIN_HINT}`, required: false },
   { name: "suppleant_2", label: "نائب العضو الثاني (Suppléant 2)", required: true },
-  { name: "suppleant_2_cin", label: `رقم البطاقة الوطنية - نائب العضو الثاني ${CIN_HINT}`, required: false },
+  { name: "suppleant_2_cin", label: `بطاقة التعريف الوطنية - نائب العضو الثاني ${CIN_HINT}`, required: false },
   { name: "suppleant_3", label: "نائب الكاتب (Suppléant 3 / Clerc)", required: true },
-  { name: "suppleant_3_cin", label: `رقم البطاقة الوطنية - نائب الكاتب ${CIN_HINT}`, required: false },
+  { name: "suppleant_3_cin", label: `بطاقة التعريف الوطنية - نائب الكاتب ${CIN_HINT}`, required: false },
   { name: "numero_decision", label: "رقم القرار (optionnel)", required: false },
   { name: "date_signature", label: "تاريخ التوقيع (optionnel)", required: false },
 ]
 
 const NULLABLE_FIELDS: (keyof BureauVoteInput)[] = [
+  "numero_bureau_central",
+  "president_bureau_central",
   "adresse_bureau_central",
   "numero_decision",
   "date_signature",
@@ -89,8 +96,8 @@ export function BureauForm({ initial, onSubmit, onCancel }: BureauFormProps) {
           president_cin: initial.president_cin ?? "",
           vice_president: initial.vice_president,
           vice_president_cin: initial.vice_president_cin ?? "",
-          numero_bureau_central: initial.numero_bureau_central,
-          president_bureau_central: initial.president_bureau_central,
+          numero_bureau_central: initial.numero_bureau_central ?? "",
+          president_bureau_central: initial.president_bureau_central ?? "",
           adresse_bureau_central: initial.adresse_bureau_central ?? "",
           membre_1: initial.membre_1,
           membre_1_cin: initial.membre_1_cin ?? "",

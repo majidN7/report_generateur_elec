@@ -12,8 +12,8 @@ class BureauVoteBase(BaseModel):
     vice_president: str = Field(..., min_length=1, max_length=255)
     vice_president_cin: str | None = Field(None, max_length=50)
 
-    numero_bureau_central: str = Field(..., min_length=1, max_length=50)
-    president_bureau_central: str = Field(..., min_length=1, max_length=255)
+    numero_bureau_central: str | None = Field(None, max_length=50)
+    president_bureau_central: str | None = Field(None, max_length=255)
     adresse_bureau_central: str | None = Field(None, max_length=500)
 
     membre_1: str = Field(..., min_length=1, max_length=255)

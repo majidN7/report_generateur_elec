@@ -5,19 +5,22 @@ fait que créer des fiches "bureau central" minimales — numéro, commune et
 président — à compléter manuellement), ce fichier est la source dédiée et
 complète des bureaux centraux : il alimente donc tous les champs de
 `BureauCentral` (upsert complet), y compris le vice-président, les membres,
-les suppléants et l'adresse.
+les suppléants, l'adresse et le CIN de chaque personne.
 
-Colonnes attendues dans la feuille de données :
-    الجماعة, رقم المكتب المركزي, رئيس المكتب المركزي,
-    عنوان المكتب المركزي (optionnelle),
-    نائب رئيس المكتب المركزي (optionnelle),
-    العضو الأول, العضو الثاني, العضو الثالث/كاتب (optionnelles),
-    نائب العضو الأول, نائب العضو الثاني, نائب العضو الثالث/الكاتب (optionnelles),
-    رقم البطاقة الوطنية - ... pour chaque personne (optionnelles, mais
-    requises pour pouvoir générer l'arrêté, voir word_merge.py)
+Colonnes attendues dans la feuille de données (en-têtes exacts du modèle
+Excel officiel "Base_Fusion_Bureaux_Vote__BV.xlsx", feuille
+"مكاتب التصويت المركزية") :
+    رئيس المكتب المركزي, بطاقة التعريف الوطنية رئيس المكتب المركزي,
+    رقم المكتب المركزي, الجماعة, عنوان مكتب التصويت,
+    نائب رئيس المكتب المركزي, بطاقة التعريف الوطنية نائب رئيس المكتب المركزي,
+    العضو الأول/الثاني/الثالث + بطاقة التعريف الوطنية عضو الأول/الثاني/الثالث,
+    نائب العضو الأول/الثاني/الثالث + بطاقة التعريف الوطنية نائب العضو
+    الأول/الثاني/الثالث
 
-Si les en-têtes de votre fichier diffèrent de cette liste, adaptez
-`COLUMN_MAP` ci-dessous en conséquence.
+Seules الجماعة, رقم المكتب المركزي et رئيس المكتب المركزي sont obligatoires
+pour l'import ; le reste (CIN compris) est optionnel au stockage mais
+requis pour générer l'arrêté (voir word_merge.py). Si les en-têtes de votre
+fichier diffèrent de cette liste, adaptez `COLUMN_MAP` ci-dessous.
 """
 
 import io
@@ -29,36 +32,40 @@ from app.models.bureau_central import BureauCentral
 from app.schemas.import_report import ImportReport, ImportRowError
 
 COLUMN_MAP = {
-    "الجماعة": "commune",
-    "رقم المكتب المركزي": "numero_bureau_central",
     "رئيس المكتب المركزي": "president_bureau_central",
-    "عنوان المكتب المركزي": "adresse_bureau_central",
+    "بطاقة التعريف الوطنية رئيس المكتب المركزي": "president_cin",
+    "رقم المكتب المركزي": "numero_bureau_central",
+    "الجماعة": "commune",
+    "عنوان مكتب التصويت": "adresse_bureau_central",
     "نائب رئيس المكتب المركزي": "vice_president_bureau_central",
+    "بطاقة التعريف الوطنية نائب رئيس المكتب المركزي": "vice_president_cin",
     "العضو الأول": "membre_central_1",
+    "بطاقة التعريف الوطنية عضو الأول": "membre_central_1_cin",
     "العضو الثاني": "membre_central_2",
+    "بطاقة التعريف الوطنية عضو الثاني": "membre_central_2_cin",
     "العضو الثالث": "membre_central_3",
+    "بطاقة التعريف الوطنية عضو الثالث": "membre_central_3_cin",
     "نائب العضو الأول": "suppleant_central_1",
+    "بطاقة التعريف الوطنية نائب العضو الأول": "suppleant_central_1_cin",
     "نائب العضو الثاني": "suppleant_central_2",
+    "بطاقة التعريف الوطنية نائب العضو الثاني": "suppleant_central_2_cin",
     "نائب العضو الثالث": "suppleant_central_3",
-    "رقم البطاقة الوطنية - الرئيس": "president_cin",
-    "رقم البطاقة الوطنية - نائب الرئيس": "vice_president_cin",
-    "رقم البطاقة الوطنية - العضو الأول": "membre_central_1_cin",
-    "رقم البطاقة الوطنية - العضو الثاني": "membre_central_2_cin",
-    "رقم البطاقة الوطنية - كاتب": "membre_central_3_cin",
-    "رقم البطاقة الوطنية - نائب العضو الأول": "suppleant_central_1_cin",
-    "رقم البطاقة الوطنية - نائب العضو الثاني": "suppleant_central_2_cin",
-    "رقم البطاقة الوطنية - نائب الكاتب": "suppleant_central_3_cin",
+    "بطاقة التعريف الوطنية نائب العضو الثالث": "suppleant_central_3_cin",
 }
 
 REQUIRED_FIELDS = ["commune", "numero_bureau_central", "president_bureau_central"]
+OPTIONAL_FIELDS = [f for f in COLUMN_MAP.values() if f not in REQUIRED_FIELDS]
 
-PREFERRED_SHEET_NAMES = ["Bureaux_Centraux", "Donnees_Bureaux_Centraux"]
+PREFERRED_SHEET_NAMES = ["مكاتب التصويت المركزية", "Bureaux_Centraux", "Donnees_Bureaux_Centraux"]
 
 
-def _find_data_sheet(workbook: openpyxl.Workbook):
-    for name in PREFERRED_SHEET_NAMES:
-        if name in workbook.sheetnames:
-            return workbook[name]
+def find_central_sheet(workbook: openpyxl.Workbook):
+    """Locate the central-bureaux worksheet, tolerant of trailing/leading
+    whitespace in sheet names (the official file has some)."""
+    stripped = {name.strip(): name for name in workbook.sheetnames}
+    for preferred in PREFERRED_SHEET_NAMES:
+        if preferred in stripped:
+            return workbook[stripped[preferred]]
     for name in workbook.sheetnames:
         ws = workbook[name]
         header_row = [c.value for c in ws[1]]
@@ -74,10 +81,10 @@ def _clean(value) -> str | None:
     return text or None
 
 
-def import_excel_bureaux_centraux(db: Session, file_bytes: bytes) -> ImportReport:
-    workbook = openpyxl.load_workbook(io.BytesIO(file_bytes), data_only=True)
-    ws = _find_data_sheet(workbook)
-
+def import_central_worksheet(db: Session, ws) -> ImportReport:
+    """Core import loop, reusable on any worksheet object — including one
+    found inside a workbook that also contains the ordinary bureaux sheet
+    (see excel_import.py's dual-sheet format)."""
     header_row = [c.value for c in ws[1]]
     header_index = {name: idx for idx, name in enumerate(header_row) if name in COLUMN_MAP}
 
@@ -86,7 +93,7 @@ def import_excel_bureaux_centraux(db: Session, file_bytes: bytes) -> ImportRepor
     ]
     if missing_required_columns:
         raise ValueError(
-            "Colonnes obligatoires manquantes dans le fichier Excel : "
+            "Colonnes obligatoires manquantes dans le fichier Excel (bureaux centraux) : "
             + ", ".join(missing_required_columns)
         )
 
@@ -122,8 +129,6 @@ def import_excel_bureaux_centraux(db: Session, file_bytes: bytes) -> ImportRepor
             continue
         seen_keys.add(key)
 
-        optional_fields = [f for f in COLUMN_MAP.values() if f not in REQUIRED_FIELDS]
-
         existing = pending.get(key) or (
             db.query(BureauCentral)
             .filter(BureauCentral.commune == key[0], BureauCentral.numero_bureau_central == key[1])
@@ -131,7 +136,7 @@ def import_excel_bureaux_centraux(db: Session, file_bytes: bytes) -> ImportRepor
         )
         if existing:
             existing.president_bureau_central = record["president_bureau_central"]
-            for field in optional_fields:
+            for field in OPTIONAL_FIELDS:
                 if record.get(field):
                     setattr(existing, field, record[field])
             pending[key] = existing
@@ -141,7 +146,7 @@ def import_excel_bureaux_centraux(db: Session, file_bytes: bytes) -> ImportRepor
                 commune=record["commune"],
                 numero_bureau_central=record["numero_bureau_central"],
                 president_bureau_central=record["president_bureau_central"],
-                **{field: record.get(field) for field in optional_fields},
+                **{field: record.get(field) for field in OPTIONAL_FIELDS},
             )
             db.add(new_bureau)
             pending[key] = new_bureau
@@ -157,3 +162,9 @@ def import_excel_bureaux_centraux(db: Session, file_bytes: bytes) -> ImportRepor
         errors=errors,
         bureaux_centraux_created=0,
     )
+
+
+def import_excel_bureaux_centraux(db: Session, file_bytes: bytes) -> ImportReport:
+    workbook = openpyxl.load_workbook(io.BytesIO(file_bytes), data_only=True)
+    ws = find_central_sheet(workbook)
+    return import_central_worksheet(db, ws)
