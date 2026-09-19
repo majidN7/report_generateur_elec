@@ -16,10 +16,14 @@ def test_import_excel_success(client):
     assert report["created"] == 50
     assert report["skipped_duplicates"] == 1
     assert report["errors"] == []
-    assert report["bureaux_centraux_created"] > 0
+    # رقم المكتب المركزي / رئيس المكتب المركزي are no longer read from the
+    # bureaux de vote import (even when present in the file, as in this
+    # legacy fixture): no central-bureau stub is created from this import.
+    assert report["bureaux_centraux_created"] == 0
 
     listing = client.get("/api/bureaux?page_size=1").json()
     assert listing["total"] == 50
+    assert listing["items"][0]["numero_bureau_central"] is None
 
 
 def test_import_rejects_non_excel_file(client):

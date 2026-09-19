@@ -7,12 +7,12 @@ from app.database import Base
 
 
 class BureauCentral(Base):
-    """Un bureau de vote central. Les colonnes "membres"/"nom du vice-président"
-    n'existent pas dans le fichier Excel source (qui ne fournit que le numéro
-    et le président du bureau central rattachés à chaque bureau ordinaire) :
-    ces enregistrements sont donc auto-créés (stubs) lors de l'import puis
-    complétés manuellement par l'utilisateur avant de pouvoir générer l'arrêté
-    du bureau central.
+    """Un bureau de vote central. Importé exclusivement via sa propre
+    feuille/fichier dédié (voir excel_import_central.py) — l'import des
+    bureaux de vote (excel_import.py) ne crée plus de fiche à partir de
+    ses colonnes. Les champs autres que le numéro/commune/président sont
+    nullable et à compléter manuellement si l'import ne les fournit pas,
+    requis pour générer l'arrêté (voir word_merge.py).
     """
 
     __tablename__ = "bureaux_centraux"

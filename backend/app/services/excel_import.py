@@ -4,9 +4,8 @@ Deux formats sont pris en charge :
 
 1. **Format historique** (une seule feuille, ex. "Donnees_Fusion") avec les
    colonnes : الرئيس, نائب الرئيس, رقم مكتب التصويت, الجماعة, عنوان مكتب
-   التصويت, رقم المكتب المركزي, رئيس المكتب المركزي, العضو الأول/الثاني/
-   الثالث, نائب العضو الأول/الثاني/الثالث — avec, en option, les colonnes CIN
-   ci-dessous.
+   التصويت, العضو الأول/الثاني/الثالث, نائب العضو الأول/الثاني/الثالث —
+   avec, en option, les colonnes CIN ci-dessous.
 
 2. **Format 2026** ("Base_Fusion_Bureaux_Vote__BV.xlsx"), détecté par la
    présence d'une feuille "رؤساء وأعضاء مكاتب التصويت" et/ou "مكاتب التصويت
@@ -14,12 +13,15 @@ Deux formats sont pris en charge :
    deux feuilles séparées du même classeur, chacune avec le CIN de chaque
    personne. Les deux feuilles sont importées en une seule fois par ce
    module (la feuille des bureaux centraux est traitée par
-   `excel_import_central.import_central_worksheet`). Fait notable : la
-   feuille des bureaux ordinaires ne fournit plus le rattachement au bureau
-   central (رقم المكتب المركزي / رئيس المكتب المركزي) — ces deux champs sont
-   donc optionnels au stockage dans les deux formats, mais restent requis
-   pour générer l'arrêté (voir word_merge.py), à compléter manuellement si
-   le fichier importé ne les fournit pas.
+   `excel_import_central.import_central_worksheet`).
+
+L'import des bureaux de vote (les deux formats) ne lit plus رقم المكتب
+المركزي / رئيس المكتب المركزي : le rattachement d'un bureau à son bureau
+central se saisit désormais uniquement à la main (`numero_bureau_central`/
+`president_bureau_central` restent nullable sur `BureauVote`, requis pour
+générer l'arrêté — voir word_merge.py). Les bureaux centraux eux-mêmes sont
+importés séparément (feuille dédiée du format 2026, ou fichier dédié via
+`excel_import_central.import_excel_bureaux_centraux`).
 
 Colonnes CIN (optionnelles au stockage, requises pour la génération) :
     بطاقة التعريف الوطنية الرئيس, بطاقة التعريف الوطنية نائب الرئيس,
@@ -32,7 +34,6 @@ import io
 import openpyxl
 from sqlalchemy.orm import Session
 
-from app.models.bureau_central import BureauCentral
 from app.models.bureau_vote import BureauVote
 from app.schemas.import_report import ImportReport, ImportRowError
 from app.services.excel_import_central import find_central_sheet, import_central_worksheet
@@ -51,13 +52,6 @@ CORE_COLUMN_MAP = {
     "نائب العضو الثالث": "suppleant_3",
 }
 
-# Optionnel au stockage : absent de la feuille "رؤساء وأعضاء مكاتب التصويت"
-# du format 2026, requis pour générer l'arrêté (voir word_merge.py).
-LINK_COLUMN_MAP = {
-    "رقم المكتب المركزي": "numero_bureau_central",
-    "رئيس المكتب المركزي": "president_bureau_central",
-}
-
 CIN_COLUMN_MAP = {
     "بطاقة التعريف الوطنية الرئيس": "president_cin",
     "بطاقة التعريف الوطنية نائب الرئيس": "vice_president_cin",
@@ -69,9 +63,9 @@ CIN_COLUMN_MAP = {
     "بطاقة التعريف الوطنية نائب العضو الثالث": "suppleant_3_cin",
 }
 
-COLUMN_MAP = {**CORE_COLUMN_MAP, **LINK_COLUMN_MAP, **CIN_COLUMN_MAP}
+COLUMN_MAP = {**CORE_COLUMN_MAP, **CIN_COLUMN_MAP}
 REQUIRED_FIELDS = list(CORE_COLUMN_MAP.values())
-OPTIONAL_FIELDS = list(LINK_COLUMN_MAP.values()) + list(CIN_COLUMN_MAP.values())
+OPTIONAL_FIELDS = list(CIN_COLUMN_MAP.values())
 
 PREFERRED_SHEET_NAMES = ["رؤساء وأعضاء مكاتب التصويت", "Donnees_Fusion"]
 DUAL_FORMAT_SHEET_NAMES = {"رؤساء وأعضاء مكاتب التصويت", "مكاتب التصويت المركزية"}
@@ -113,7 +107,7 @@ def _merge_reports(reports: list[ImportReport]) -> ImportReport:
     )
 
 
-def _import_vote_worksheet(db: Session, ws, create_central_stubs: bool) -> ImportReport:
+def _import_vote_worksheet(db: Session, ws) -> ImportReport:
     header_row = [c.value for c in ws[1]]
     header_index = {name: idx for idx, name in enumerate(header_row) if name in COLUMN_MAP}
 
@@ -126,10 +120,8 @@ def _import_vote_worksheet(db: Session, ws, create_central_stubs: bool) -> Impor
     created = 0
     updated = 0
     skipped_duplicates = 0
-    bureaux_centraux_created = 0
     errors: list[ImportRowError] = []
     seen_keys: set[tuple[str, str]] = set()
-    pending_centrals: dict[tuple[str, str], BureauCentral] = {}
 
     total_rows = 0
     for row_idx, row in enumerate(ws.iter_rows(min_row=2), start=2):
@@ -175,29 +167,6 @@ def _import_vote_worksheet(db: Session, ws, create_central_stubs: bool) -> Impor
             db.add(BureauVote(**record))
             created += 1
 
-        if create_central_stubs and record.get("numero_bureau_central"):
-            central_key = (record["commune"], record["numero_bureau_central"])
-            existing_central = pending_centrals.get(central_key) or (
-                db.query(BureauCentral)
-                .filter(
-                    BureauCentral.commune == central_key[0],
-                    BureauCentral.numero_bureau_central == central_key[1],
-                )
-                .one_or_none()
-            )
-            if existing_central:
-                existing_central.president_bureau_central = record["president_bureau_central"]
-                pending_centrals[central_key] = existing_central
-            else:
-                new_central = BureauCentral(
-                    numero_bureau_central=record["numero_bureau_central"],
-                    commune=record["commune"],
-                    president_bureau_central=record["president_bureau_central"],
-                )
-                db.add(new_central)
-                pending_centrals[central_key] = new_central
-                bureaux_centraux_created += 1
-
     db.commit()
 
     return ImportReport(
@@ -206,7 +175,7 @@ def _import_vote_worksheet(db: Session, ws, create_central_stubs: bool) -> Impor
         updated=updated,
         skipped_duplicates=skipped_duplicates,
         errors=errors,
-        bureaux_centraux_created=bureaux_centraux_created,
+        bureaux_centraux_created=0,
     )
 
 
@@ -221,11 +190,8 @@ def import_excel_file(db: Session, file_bytes: bytes) -> ImportReport:
             reports.append(import_central_worksheet(db, central_ws))
         if "رؤساء وأعضاء مكاتب التصويت" in stripped:
             vote_ws = workbook[stripped["رؤساء وأعضاء مكاتب التصويت"]]
-            # Le format 2026 fournit déjà les bureaux centraux en détail dans
-            # sa propre feuille : inutile d'y créer des stubs à partir de la
-            # feuille des bureaux ordinaires (qui ne les référence plus).
-            reports.append(_import_vote_worksheet(db, vote_ws, create_central_stubs=False))
+            reports.append(_import_vote_worksheet(db, vote_ws))
         return _merge_reports(reports)
 
     ws = _find_vote_sheet(workbook)
-    return _import_vote_worksheet(db, ws, create_central_stubs=True)
+    return _import_vote_worksheet(db, ws)

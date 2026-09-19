@@ -330,9 +330,10 @@ export function BureauxPage() {
             '("Donnees_Fusion"), ou le nouveau modèle 2026 ("Base_Fusion_Bureaux_Vote__BV.xlsx") ' +
             'avec ses deux feuilles séparées "رؤساء وأعضاء مكاتب التصويت" (bureaux ordinaires, ' +
             'avec CIN) et "مكاتب التصويت المركزية" (bureaux centraux, avec CIN) — les deux sont ' +
-            "importées automatiquement en une fois. Dans ce nouveau format, le rattachement d'un " +
-            "bureau ordinaire à son bureau central n'est plus fourni : complétez-le manuellement " +
-            "si besoin, il reste requis pour générer l'arrêté."
+            "importées automatiquement en une fois. Le rattachement d'un bureau ordinaire à son " +
+            "bureau central (رقم المكتب المركزي / رئيس المكتب المركزي) n'est plus lu depuis " +
+            "aucun des deux formats : complétez-le manuellement via Modifier, il reste requis " +
+            "pour générer l'arrêté."
           }
           importFn={importExcelFile}
           onClose={() => setShowImport(false)}

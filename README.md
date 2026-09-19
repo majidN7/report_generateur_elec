@@ -113,29 +113,26 @@ appels `/api/*` vers `http://localhost:8000` (voir `vite.config.ts`).
 2. **Gérer les bureaux** : recherchez, filtrez par commune, triez, consultez
    le détail, modifiez ou supprimez un enregistrement, ou ajoutez-en un
    manuellement.
-3. **Compléter les bureaux centraux** : avec l'ancien format à une seule
-   feuille, l'import crée automatiquement une fiche minimale par bureau
-   central référencé (numéro + président seulement). Il existe deux façons
-   de la compléter :
-   - manuellement, via *Modifier* dans l'onglet *Bureaux centraux* ;
-   - en important un **fichier Excel dédié aux bureaux centraux** (bouton
-     *Importer Excel* de l'onglet *Bureaux centraux*, ou directement via le
-     nouveau format à deux feuilles ci-dessus), qui alimente en une fois le
-     vice-président, les 3 membres, les 3 suppléants, l'adresse et le CIN de
-     chacun. Cet import fonctionne aussi de façon autonome : un bureau
-     central qui n'existe pas encore est créé directement, sans dépendre
-     d'un import préalable des bureaux de vote.
+3. **Gérer les bureaux centraux** : ils s'importent exclusivement via leur
+   propre feuille/fichier dédié (l'import des bureaux de vote ne les crée
+   plus, voir plus bas) :
+   - le **fichier Excel dédié aux bureaux centraux** (bouton *Importer
+     Excel* de l'onglet *Bureaux centraux*, ou directement via la feuille
+     `مكاتب التصويت المركزية` du nouveau format 2026), qui alimente en une
+     fois le président, le vice-président, les 3 membres, les 3 suppléants,
+     l'adresse et le CIN de chacun ;
+   - ou manuellement, via *+ Ajouter un bureau central* / *Modifier* dans
+     l'onglet *Bureaux centraux*.
    Un badge *À compléter* / *Complet* indique si l'arrêté peut être généré.
 4. **Compléter le CIN et le rattachement au bureau central** : depuis le
    modèle Word du 19/09/2026, chaque personne (président, vice-président, 3
    membres, 3 suppléants) doit avoir son numéro de carte d'identité
    nationale (CIN) pour que l'arrêté — ordinaire ou central — puisse être
-   généré. De plus, avec le nouveau format Excel à deux feuilles, la feuille
-   des bureaux ordinaires ne fournit plus le numéro et le président du
-   bureau central de rattachement (رقم المكتب المركزي / رئيس المكتب
-   المركزي) : ces deux champs, comme le CIN, se saisissent alors via
-   *Modifier*. Un badge *Complet* / *À compléter* indique le statut sur les
-   deux tableaux.
+   généré. De plus, l'import des bureaux de vote (quel que soit le format)
+   ne fournit plus le numéro et le président du bureau central de
+   rattachement (رقم المكتب المركزي / رئيس المكتب المركزي) : ces deux
+   champs, comme le CIN, se saisissent via *Modifier*. Un badge *Complet* /
+   *À compléter* indique le statut sur les deux tableaux.
 5. **Générer les arrêtés** :
    - Depuis une ligne du tableau : boutons *Word* / *PDF* pour un
      téléchargement unitaire (désactivés tant qu'il manque le CIN d'une
@@ -151,16 +148,20 @@ L'endpoint `POST /api/import/excel` détecte automatiquement le format du
 fichier envoyé :
 
 - **Format historique** (une seule feuille, ex. `Donnees_Fusion`) :
-  الرئيس, نائب الرئيس, رقم مكتب التصويت, الجماعة, عنوان مكتب التصويت, رقم
-  المكتب المركزي, رئيس المكتب المركزي, membres/suppléants 1 à 3, plus les 8
-  colonnes CIN optionnelles (`بطاقة التعريف الوطنية <rôle>`).
+  الرئيس, نائب الرئيس, رقم مكتب التصويت, الجماعة, عنوان مكتب التصويت,
+  membres/suppléants 1 à 3, plus les 8 colonnes CIN optionnelles (`بطاقة
+  التعريف الوطنية <rôle>`).
 - **Format 2026** (`Base_Fusion_Bureaux_Vote__BV.xlsx`), reconnu à la
   présence d'une feuille nommée `رؤساء وأعضاء مكاتب التصويت` et/ou `مكاتب
   التصويت المركزية` : chaque feuille est importée dans la table
   correspondante (bureaux de vote / bureaux centraux), toutes deux avec le
-  CIN de chaque personne. **Différence notable** : la feuille des bureaux
-  ordinaires de ce format ne contient plus les colonnes رقم المكتب المركزي
-  / رئيس المكتب المركزي — voir la décision de conception ci-dessous.
+  CIN de chaque personne.
+
+**Important** : dans les deux formats, l'import des bureaux de vote ne lit
+plus les colonnes رقم المكتب المركزي / رئيس المكتب المركزي, même si elles
+sont présentes dans le fichier (cas de l'ancien format) — voir la décision
+de conception ci-dessous. Le rattachement à un bureau central se saisit
+donc systématiquement à la main, via *Modifier*.
 
 Dans les deux formats, une ligne dupliquée (même commune + même numéro) au
 sein du fichier est comptabilisée en doublon ignoré, et une ligne déjà
@@ -168,32 +169,38 @@ présente en base est mise à jour (upsert).
 
 ## Import dédié des bureaux centraux
 
-En plus de la création automatique de fiches "bureau central" lors de
-l'import principal, l'onglet *Bureaux centraux* propose son propre bouton
-*Importer Excel* (`POST /api/bureaux-centraux/import`) pour un fichier
-dédié à ces bureaux. Colonnes attendues dans la feuille de données
-(idéalement nommée `Bureaux_Centraux`) :
+Les bureaux centraux s'importent exclusivement via cette voie (l'import des
+bureaux de vote ne crée plus de fiche "bureau central", voir la décision de
+conception ci-dessous) : soit la feuille `مكاتب التصويت المركزية` du
+nouveau format 2026 (traitée automatiquement par l'import principal), soit
+le bouton dédié *Importer Excel* de l'onglet *Bureaux centraux*
+(`POST /api/bureaux-centraux/import`) pour un fichier à part. Les deux
+partagent le même mapping de colonnes (en-têtes exacts du modèle Excel
+officiel) :
 
-| Colonne (obligatoire)         | Champ                            |
-|--------------------------------|-----------------------------------|
-| الجماعة                        | Commune                           |
-| رقم المكتب المركزي             | Numéro du bureau central          |
-| رئيس المكتب المركزي            | Président                         |
+| Colonne (obligatoire) | Champ                     |
+|------------------------|----------------------------|
+| رئيس المكتب المركزي   | Président                  |
+| رقم المكتب المركزي    | Numéro du bureau central   |
+| الجماعة               | Commune                    |
 
-| Colonne (optionnelle)                | Champ                        |
-|----------------------------------------|-------------------------------|
-| عنوان المكتب المركزي                  | Adresse                       |
-| نائب رئيس المكتب المركزي              | Vice-président                |
-| العضو الأول / الثاني / كاتب           | Membres 1, 2 et 3 (clerc)     |
-| نائب العضو الأول / الثاني / نائب الكاتب | Suppléants 1, 2 et 3        |
-| رقم البطاقة الوطنية - الرئيس / نائب الرئيس / العضو الأول / العضو الثاني / كاتب / نائب العضو الأول / نائب العضو الثاني / نائب الكاتب | CIN de chaque personne (8 colonnes) |
+| Colonne (optionnelle)                              | Champ                     |
+|------------------------------------------------------|----------------------------|
+| بطاقة التعريف الوطنية رئيس المكتب المركزي           | CIN du président           |
+| عنوان مكتب التصويت                                  | Adresse                    |
+| نائب رئيس المكتب المركزي                            | Vice-président             |
+| بطاقة التعريف الوطنية نائب رئيس المكتب المركزي      | CIN du vice-président      |
+| العضو الأول / الثاني / الثالث                       | Membres 1, 2 et 3          |
+| بطاقة التعريف الوطنية عضو الأول / الثاني / الثالث   | CIN des membres 1, 2 et 3  |
+| نائب العضو الأول / الثاني / الثالث                  | Suppléants 1, 2 et 3       |
+| بطاقة التعريف الوطنية نائب العضو الأول / الثاني / الثالث | CIN des suppléants 1, 2 et 3 |
 
 Le rapprochement se fait par (commune, numéro de bureau central) : une
-fiche existante (même auto-créée en stub) est complétée/mise à jour, une
-fiche absente est créée directement — cet import ne dépend donc pas d'un
-import préalable des bureaux de vote. Une cellule optionnelle laissée vide
-ne réinitialise pas une valeur déjà enregistrée. **Si vos en-têtes réels
-diffèrent** de ce tableau, ajustez `COLUMN_MAP` dans
+fiche existante est complétée/mise à jour, une fiche absente est créée
+directement — cet import ne dépend donc pas d'un import préalable des
+bureaux de vote. Une cellule optionnelle laissée vide ne réinitialise pas
+une valeur déjà enregistrée. **Si vos en-têtes réels diffèrent** de ce
+tableau, ajustez `COLUMN_MAP` dans
 `backend/app/services/excel_import_central.py` (aucune migration requise,
 ce sont des colonnes déjà présentes dans le modèle `BureauCentral`).
 
@@ -229,32 +236,32 @@ ce sont des colonnes déjà présentes dans le modèle `BureauCentral`).
   ignore silencieusement (en le comptabilisant) tout bureau où un CIN
   manque, avec un message d'erreur listant précisément les champs
   manquants.
-- **Bureaux centraux = fiches à compléter (ou import dédié)** : le fichier
-  Excel principal ne contient, pour chaque bureau central, que son numéro et
-  le nom de son président (ces informations apparaissent répétées sur
-  chaque ligne des bureaux ordinaires qui lui sont rattachés). Il ne fournit
-  ni son vice-président, ni ses membres/suppléants, ni son adresse propre.
-  Plutôt que d'inventer ces données, l'application crée automatiquement une
-  fiche "bureau central" (dédupliquée par commune + numéro) lors de l'import
-  principal et bloque la génération de son arrêté tant que ces champs n'ont
-  pas été renseignés — manuellement, ou via l'import Excel dédié décrit
-  ci-dessus — avec un message d'erreur explicite listant les champs
-  manquants.
-- **Rattachement au bureau central optionnel au stockage (format 2026)** :
-  le fichier `Base_Fusion_Bureaux_Vote__BV.xlsx` sépare les bureaux
-  ordinaires et les bureaux centraux en deux feuilles indépendantes, et la
-  feuille des bureaux ordinaires ne fournit plus رقم المكتب المركزي / رئيس
-  المكتب المركزي du tout (contrairement à l'ancien format à une seule
-  feuille, où ces colonnes étaient toujours présentes). `numero_bureau_
-  central` et `president_bureau_central` sont donc devenus nullable sur
-  `BureauVote` (migration `d5fbabc5576b`), suivant exactement le même
-  principe que le CIN : optionnels à l'import/la création, mais requis pour
-  générer l'arrêté (`MissingFieldsError`, 422, message explicite). Comme la
-  feuille des bureaux centraux du nouveau format fournit déjà toutes leurs
-  données en détail, l'import de ce format ne crée plus de fiches "stub" à
-  partir de la feuille des bureaux ordinaires (`bureaux_centraux_created`
-  reste à 0) — seul l'ancien format à une seule feuille continue à générer
-  ces stubs, comme avant.
+- **Bureaux centraux = import dédié, génération bloquée tant qu'incomplet** :
+  les bureaux centraux ne sont plus jamais déduits ou stubés depuis l'import
+  des bureaux de vote (voir point suivant) — ils viennent exclusivement de
+  leur propre feuille/fichier dédié (voir *Import dédié des bureaux
+  centraux* ci-dessus). Tant que le président, le vice-président, les 3
+  membres, les 3 suppléants, l'adresse ou un CIN manquent, la génération de
+  l'arrêté est bloquée avec un message d'erreur explicite listant les
+  champs manquants.
+- **Rattachement au bureau central retiré de l'import des bureaux de vote** :
+  le fichier `Base_Fusion_Bureaux_Vote__BV.xlsx` (format 2026) sépare les
+  bureaux ordinaires et les bureaux centraux en deux feuilles indépendantes,
+  et la feuille des bureaux ordinaires ne fournit plus رقم المكتب المركزي /
+  رئيس المكتب المركزي du tout. `numero_bureau_central` et
+  `president_bureau_central` sont donc devenus nullable sur `BureauVote`
+  (migration `d5fbabc5576b`), suivant le même principe que le CIN :
+  optionnels au stockage, mais requis pour générer l'arrêté
+  (`MissingFieldsError`, 422, message explicite). Suite à cela, l'import des
+  bureaux de vote a été simplifié pour ne plus jamais lire ces deux colonnes
+  — y compris pour l'ancien format à une seule feuille, qui les contient
+  pourtant toujours : si présentes, elles sont désormais ignorées. Ce choix
+  uniformise le comportement des deux formats (le rattachement se saisit
+  systématiquement à la main, via *Modifier*) et l'import ne crée plus de
+  fiches "bureau central" à partir de la feuille des bureaux de vote
+  (`bureaux_centraux_created` reste toujours à 0 pour cet import) : les
+  bureaux centraux s'importent désormais exclusivement via leur propre
+  feuille/fichier dédié.
 - **Adresse du bureau central (arrêté ordinaire)** : la phrase de l'arrêté
   ordinaire mentionne aussi le lieu du bureau central de rattachement. Par
   défaut, l'application réutilise l'adresse du bureau de vote lui-même

@@ -22,11 +22,11 @@ class BureauVote(Base):
     vice_president: Mapped[str] = mapped_column(String(255))
     vice_president_cin: Mapped[str | None] = mapped_column(String(50), nullable=True)
 
-    # Nullable : le format Excel introduit le 19/09/2026 ("مكاتب التصويت
-    # المركزية" + "رؤساء وأعضاء مكاتب التصويت" en feuilles séparées) ne
-    # fournit plus le rattachement au bureau central sur la feuille des
-    # bureaux ordinaires. Optionnel au stockage, mais requis pour générer
-    # l'arrêté (voir word_merge.py), comme le CIN.
+    # Nullable : l'import des bureaux de vote (excel_import.py) ne lit plus
+    # رقم المكتب المركزي / رئيس المكتب المركزي, quel que soit le format
+    # (même l'ancien format à une seule feuille, qui contient pourtant ces
+    # colonnes). Le rattachement se saisit à la main. Optionnel au stockage,
+    # mais requis pour générer l'arrêté (voir word_merge.py), comme le CIN.
     numero_bureau_central: Mapped[str | None] = mapped_column(String(50), index=True, nullable=True)
     president_bureau_central: Mapped[str | None] = mapped_column(String(255), nullable=True)
     adresse_bureau_central: Mapped[str | None] = mapped_column(String(500), nullable=True)
