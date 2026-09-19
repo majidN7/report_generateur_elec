@@ -12,9 +12,11 @@ class BureauVoteBase(BaseModel):
     vice_president: str = Field(..., min_length=1, max_length=255)
     vice_president_cin: str | None = Field(None, max_length=50)
 
-    numero_bureau_central: str | None = Field(None, max_length=50)
+    # numero_bureau_central / adresse_bureau_central : retirés du schéma (et
+    # donc de l'API et des formulaires) car ils ne figurent plus dans
+    # l'arrêté officiel du bureau de vote. president_bureau_central reste
+    # disponible, à titre informatif.
     president_bureau_central: str | None = Field(None, max_length=255)
-    adresse_bureau_central: str | None = Field(None, max_length=500)
 
     membre_1: str = Field(..., min_length=1, max_length=255)
     membre_1_cin: str | None = Field(None, max_length=50)
@@ -47,9 +49,7 @@ class BureauVoteUpdate(BaseModel):
     president_cin: str | None = Field(None, max_length=50)
     vice_president: str | None = Field(None, min_length=1, max_length=255)
     vice_president_cin: str | None = Field(None, max_length=50)
-    numero_bureau_central: str | None = Field(None, min_length=1, max_length=50)
     president_bureau_central: str | None = Field(None, min_length=1, max_length=255)
-    adresse_bureau_central: str | None = Field(None, max_length=500)
     membre_1: str | None = Field(None, min_length=1, max_length=255)
     membre_1_cin: str | None = Field(None, max_length=50)
     membre_2: str | None = Field(None, min_length=1, max_length=255)

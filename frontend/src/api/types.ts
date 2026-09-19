@@ -7,9 +7,9 @@ export interface BureauVote {
   president_cin: string | null
   vice_president: string
   vice_president_cin: string | null
-  numero_bureau_central: string | null
+  // numero_bureau_central / adresse_bureau_central : retirés de l'API (ils
+  // ne figurent plus dans l'arrêté officiel du bureau de vote).
   president_bureau_central: string | null
-  adresse_bureau_central: string | null
   membre_1: string
   membre_1_cin: string | null
   membre_2: string

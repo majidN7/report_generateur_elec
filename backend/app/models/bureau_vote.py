@@ -22,13 +22,16 @@ class BureauVote(Base):
     vice_president: Mapped[str] = mapped_column(String(255))
     vice_president_cin: Mapped[str | None] = mapped_column(String(50), nullable=True)
 
-    # Nullable : l'import des bureaux de vote (excel_import.py) ne lit plus
-    # رقم المكتب المركزي / رئيس المكتب المركزي, quel que soit le format
-    # (même l'ancien format à une seule feuille, qui contient pourtant ces
-    # colonnes). Le rattachement se saisit à la main. Optionnel au stockage,
-    # mais requis pour générer l'arrêté (voir word_merge.py), comme le CIN.
-    numero_bureau_central: Mapped[str | None] = mapped_column(String(50), index=True, nullable=True)
+    # رئيس المكتب المركزي reste un champ optionnel/informatif : il ne figure
+    # plus dans l'arrêté officiel (voir word_merge.py) et n'est plus lu par
+    # l'import (excel_import.py).
     president_bureau_central: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
+    # numero_bureau_central / adresse_bureau_central : colonnes conservées
+    # pour compatibilité mais inutilisées — retirées des schémas Pydantic et
+    # de l'interface (elles ne figurent plus dans l'arrêté officiel), donc
+    # elles ne peuvent plus être renseignées via l'API ou les formulaires.
+    numero_bureau_central: Mapped[str | None] = mapped_column(String(50), index=True, nullable=True)
     adresse_bureau_central: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
     # membre_3 / suppleant_3 correspondent au rôle "كاتب" (clerc/secrétaire)

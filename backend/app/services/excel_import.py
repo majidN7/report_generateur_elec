@@ -16,11 +16,13 @@ Deux formats sont pris en charge :
    `excel_import_central.import_central_worksheet`).
 
 L'import des bureaux de vote (les deux formats) ne lit plus رقم المكتب
-المركزي / رئيس المكتب المركزي : le rattachement d'un bureau à son bureau
-central se saisit désormais uniquement à la main (`numero_bureau_central`/
-`president_bureau_central` restent nullable sur `BureauVote`, requis pour
-générer l'arrêté — voir word_merge.py). Les bureaux centraux eux-mêmes sont
-importés séparément (feuille dédiée du format 2026, ou fichier dédié via
+المركزي / رئيس المكتب المركزي / عنوان المكتب المركزي : le rattachement d'un
+bureau à son bureau central ne figure plus dans l'arrêté officiel du bureau
+de vote et n'est ni lu à l'import, ni exposé dans les formulaires
+(`numero_bureau_central`/`adresse_bureau_central` sont retirés des schémas
+Pydantic ; seul `president_bureau_central` reste disponible, à titre
+informatif). Les bureaux centraux eux-mêmes sont importés séparément
+(feuille dédiée du format 2026, ou fichier dédié via
 `excel_import_central.import_excel_bureaux_centraux`).
 
 Colonnes CIN (optionnelles au stockage, requises pour la génération) :

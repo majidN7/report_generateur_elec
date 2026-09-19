@@ -23,7 +23,8 @@ def test_import_excel_success(client):
 
     listing = client.get("/api/bureaux?page_size=1").json()
     assert listing["total"] == 50
-    assert listing["items"][0]["numero_bureau_central"] is None
+    # numero_bureau_central is no longer part of the API schema.
+    assert "numero_bureau_central" not in listing["items"][0]
 
 
 def test_import_rejects_non_excel_file(client):
@@ -68,7 +69,7 @@ def test_import_dual_sheet_format_2026(client):
     assert votes["total"] == 2
     full_vote = next(b for b in votes["items"] if b["numero_bureau"] == "12")
     assert full_vote["president_cin"] == "CIN001"
-    assert full_vote["numero_bureau_central"] is None
+    assert "numero_bureau_central" not in full_vote
     assert full_vote["president_bureau_central"] is None
 
     centraux = client.get("/api/bureaux-centraux?page_size=10").json()

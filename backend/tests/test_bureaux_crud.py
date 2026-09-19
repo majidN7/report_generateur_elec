@@ -4,7 +4,6 @@ SAMPLE = {
     "adresse_bureau": "المدرسة الابتدائية",
     "president": "أحمد بنعلي",
     "vice_president": "فاطمة العلوي",
-    "numero_bureau_central": "1",
     "president_bureau_central": "عبد الحق بلعابد",
     "membre_1": "عضو 1",
     "membre_2": "عضو 2",
@@ -77,6 +76,20 @@ def test_delete_all_bureaux_when_empty(client):
     response = client.delete("/api/bureaux/all")
     assert response.status_code == 200
     assert response.json()["deleted"] == 0
+
+
+def test_central_link_fields_removed_from_bureau_vote_api(client):
+    """numero_bureau_central et adresse_bureau_central ne figurent plus dans
+    l'arrêté officiel du bureau de vote : ils sont retirés du schéma et donc
+    silencieusement ignorés s'ils sont envoyés, tandis que
+    president_bureau_central reste disponible (informatif)."""
+    payload = dict(SAMPLE, numero_bureau_central="1", adresse_bureau_central="مقر المكتب المركزي")
+    create_resp = client.post("/api/bureaux", json=payload)
+    assert create_resp.status_code == 201
+    body = create_resp.json()
+    assert "numero_bureau_central" not in body
+    assert "adresse_bureau_central" not in body
+    assert body["president_bureau_central"] == "عبد الحق بلعابد"
 
 
 def test_numero_decision_cannot_be_set_via_api(client):

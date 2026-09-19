@@ -19,13 +19,11 @@ const FIELDS: { name: keyof BureauVoteInput; label: string; required: boolean }[
   { name: "president_cin", label: `بطاقة التعريف الوطنية - الرئيس ${CIN_HINT}`, required: false },
   { name: "vice_president", label: "نائب الرئيس (Vice-président)", required: true },
   { name: "vice_president_cin", label: `بطاقة التعريف الوطنية - نائب الرئيس ${CIN_HINT}`, required: false },
-  { name: "numero_bureau_central", label: `رقم المكتب المركزي (N° bureau central) ${LINK_HINT}`, required: false },
   {
     name: "president_bureau_central",
     label: `رئيس المكتب المركزي (Président bureau central) ${LINK_HINT}`,
     required: false,
   },
-  { name: "adresse_bureau_central", label: `عنوان المكتب المركزي ${LINK_HINT}`, required: false },
   { name: "membre_1", label: "عضو أول (Membre 1)", required: true },
   { name: "membre_1_cin", label: `بطاقة التعريف الوطنية - العضو الأول ${CIN_HINT}`, required: false },
   { name: "membre_2", label: "عضو ثاني (Membre 2)", required: true },
@@ -42,9 +40,7 @@ const FIELDS: { name: keyof BureauVoteInput; label: string; required: boolean }[
 ]
 
 const NULLABLE_FIELDS: (keyof BureauVoteInput)[] = [
-  "numero_bureau_central",
   "president_bureau_central",
-  "adresse_bureau_central",
   "date_signature",
   "president_cin",
   "vice_president_cin",
@@ -64,9 +60,7 @@ const EMPTY: BureauVoteInput = {
   president_cin: "",
   vice_president: "",
   vice_president_cin: "",
-  numero_bureau_central: "",
   president_bureau_central: "",
-  adresse_bureau_central: "",
   membre_1: "",
   membre_1_cin: "",
   membre_2: "",
@@ -93,9 +87,7 @@ export function BureauForm({ initial, onSubmit, onCancel }: BureauFormProps) {
           president_cin: initial.president_cin ?? "",
           vice_president: initial.vice_president,
           vice_president_cin: initial.vice_president_cin ?? "",
-          numero_bureau_central: initial.numero_bureau_central ?? "",
           president_bureau_central: initial.president_bureau_central ?? "",
-          adresse_bureau_central: initial.adresse_bureau_central ?? "",
           membre_1: initial.membre_1,
           membre_1_cin: initial.membre_1_cin ?? "",
           membre_2: initial.membre_2,

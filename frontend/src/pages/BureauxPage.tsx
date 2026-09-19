@@ -242,7 +242,7 @@ export function BureauxPage() {
               <th className="cursor-pointer px-3 py-2" onClick={() => toggleSort("president")}>
                 الرئيس{sortIndicator("president")}
               </th>
-              <th className="px-3 py-2">المكتب المركزي</th>
+              <th className="px-3 py-2">رئيس المكتب المركزي</th>
               <th className="px-3 py-2">Statut</th>
               <th className="px-3 py-2 text-left">Actions</th>
             </tr>
@@ -268,7 +268,7 @@ export function BureauxPage() {
                   <td className="px-3 py-2 font-medium">{bureau.numero_bureau}</td>
                   <td className="px-3 py-2">{bureau.commune}</td>
                   <td className="px-3 py-2">{bureau.president}</td>
-                  <td className="px-3 py-2">{bureau.numero_bureau_central || "—"}</td>
+                  <td className="px-3 py-2">{bureau.president_bureau_central || "—"}</td>
                   <td className="px-3 py-2">
                     {isComplete(bureau) ? (
                       <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-700">
@@ -332,9 +332,9 @@ export function BureauxPage() {
             'avec ses deux feuilles séparées "رؤساء وأعضاء مكاتب التصويت" (bureaux ordinaires, ' +
             'avec CIN) et "مكاتب التصويت المركزية" (bureaux centraux, avec CIN) — les deux sont ' +
             "importées automatiquement en une fois. Le rattachement d'un bureau ordinaire à son " +
-            "bureau central (رقم المكتب المركزي / رئيس المكتب المركزي) n'est plus lu depuis " +
-            "aucun des deux formats : complétez-le manuellement via Modifier, il reste requis " +
-            "pour générer l'arrêté."
+            "bureau central (رقم المكتب المركزي / عنوان المكتب المركزي) ne figure plus dans " +
+            "l'arrêté officiel : ces champs ont été retirés de l'application. Seul le CIN de " +
+            "chaque personne reste requis pour générer le document."
           }
           importFn={importExcelFile}
           onClose={() => setShowImport(false)}

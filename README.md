@@ -128,11 +128,11 @@ appels `/api/*` vers `http://localhost:8000` (voir `vite.config.ts`).
    membres, 3 suppléants) doit avoir son numéro de carte d'identité
    nationale (CIN) pour que l'arrêté — ordinaire ou central — puisse être
    généré ; ça se saisit via *Modifier*. Un badge *Complet* / *À compléter*
-   indique le statut sur les deux tableaux. (Le numéro et le président du
-   bureau central de rattachement — رقم المكتب المركزي / رئيس المكتب
-   المركزي — restent éditables sur la fiche du bureau de vote à titre
-   informatif, mais ne conditionnent plus rien : l'arrêté ordinaire ne les
-   mentionne plus du tout.)
+   indique le statut sur les deux tableaux. (Seul le président du bureau
+   central de rattachement — رئيس المكتب المركزي — reste éditable sur la
+   fiche du bureau de vote, à titre informatif ; رقم المكتب المركزي et
+   عنوان المكتب المركزي ont été retirés de l'application, l'arrêté
+   ordinaire ne les mentionnant plus du tout.)
 5. **Générer les arrêtés** :
    - Depuis une ligne du tableau : boutons *Word* / *PDF* pour un
      téléchargement unitaire (désactivés tant qu'il manque le CIN d'une
@@ -281,11 +281,24 @@ ce sont des colonnes déjà présentes dans le modèle `BureauCentral`).
     pourtant toujours : si présentes, elles sont ignorées, et l'import ne
     crée plus de fiches "bureau central" à partir de la feuille des
     bureaux de vote (`bureaux_centraux_created` reste à 0 pour cet import) ;
-  - les trois champs restent éditables manuellement sur la fiche du bureau
-    de vote (à titre purement informatif/organisationnel, pour le
-    classement interne), mais n'apparaissent plus dans le document généré.
+  - seul `president_bureau_central` (رئيس المكتب المركزي) reste éditable
+    manuellement sur la fiche du bureau de vote, à titre purement
+    informatif : `numero_bureau_central` et `adresse_bureau_central` ont
+    été retirés des schémas Pydantic et de l'interface (voir le point
+    suivant), n'apparaissant de toute façon plus dans le document généré.
   Les bureaux centraux s'importent désormais exclusivement via leur propre
   feuille/fichier dédié.
+- **`numero_bureau_central` / `adresse_bureau_central` retirés de la fiche
+  bureau de vote** : ces deux champs ne conditionnant déjà plus rien (voir
+  ci-dessus) et ne figurant dans aucun des deux templates Word officiels,
+  ils ont été retirés du formulaire, de la fiche détail et du schéma API
+  (`BureauVoteBase`/`BureauVoteUpdate`) du bureau de vote — un payload qui
+  les envoie encore est silencieusement ignoré, comme pour
+  `numero_decision`. Les colonnes restent en base (nullables, inutilisées)
+  pour ne pas perdre de données déjà importées. `president_bureau_central`
+  n'est pas concerné et reste disponible. *(Ces deux champs, sous le même
+  nom, existent aussi sur `BureauCentral` où ils décrivent le bureau
+  central lui-même : cette décision ne les concerne pas.)*
 - **Date de signature** : absente du fichier Excel, elle est éditable par
   enregistrement ; à défaut, l'application utilise la date du jour (au
   format arabe marocain, ex. "18 شتنبر 2026").
