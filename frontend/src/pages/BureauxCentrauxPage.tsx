@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import {
   createBureauCentral,
+  deleteAllBureauxCentraux,
   deleteBureauCentral,
   downloadBureauCentralDocument,
   generateBatchCentraux,
@@ -55,6 +56,7 @@ export function BureauxCentrauxPage() {
   const [editing, setEditing] = useState<BureauCentral | "new" | null>(null)
   const [viewing, setViewing] = useState<BureauCentral | null>(null)
   const [deleting, setDeleting] = useState<BureauCentral | null>(null)
+  const [deletingAll, setDeletingAll] = useState(false)
 
   async function load() {
     setLoading(true)
@@ -93,6 +95,18 @@ export function BureauxCentrauxPage() {
       await deleteBureauCentral(deleting.id)
       showToast("Bureau central supprimé")
       setDeleting(null)
+      load()
+    } catch (err) {
+      showToast(extractErrorMessage(err), "error")
+    }
+  }
+
+  async function handleDeleteAll() {
+    try {
+      const deleted = await deleteAllBureauxCentraux()
+      showToast(`${deleted} bureau(x) central(aux) supprimé(s)`)
+      setDeletingAll(false)
+      setPage(1)
       load()
     } catch (err) {
       showToast(extractErrorMessage(err), "error")
@@ -155,6 +169,13 @@ export function BureauxCentrauxPage() {
             className="rounded-md bg-blue-600 px-3 py-1.5 text-sm text-white hover:bg-blue-700"
           >
             + Ajouter un bureau central
+          </button>
+          <button
+            onClick={() => setDeletingAll(true)}
+            disabled={total === 0}
+            className="rounded-md border border-red-300 bg-white px-3 py-1.5 text-sm text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Supprimer tout
           </button>
         </div>
       </div>
@@ -301,6 +322,14 @@ export function BureauxCentrauxPage() {
           message={`Supprimer le bureau central n° ${deleting.numero_bureau_central} (${deleting.commune}) ? Cette action est irréversible.`}
           onConfirm={handleDelete}
           onCancel={() => setDeleting(null)}
+        />
+      )}
+
+      {deletingAll && (
+        <ConfirmDialog
+          message={`Supprimer les ${total} bureau(x) central(aux) enregistré(s) ? Cette action est définitive et irréversible.`}
+          onConfirm={handleDeleteAll}
+          onCancel={() => setDeletingAll(false)}
         />
       )}
     </div>

@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.bureau_vote import BureauVote
+from app.schemas.bulk_delete import BulkDeleteResponse
 from app.schemas.bureau_vote import (
     BureauVoteCreate,
     BureauVoteOut,
@@ -83,6 +84,13 @@ def list_bureaux(
 def list_communes(db: Session = Depends(get_db)):
     rows = db.query(BureauVote.commune).distinct().order_by(BureauVote.commune).all()
     return [r[0] for r in rows]
+
+
+@router.delete("/all", response_model=BulkDeleteResponse)
+def delete_all_bureaux(db: Session = Depends(get_db)):
+    deleted = db.query(BureauVote).delete()
+    db.commit()
+    return BulkDeleteResponse(deleted=deleted)
 
 
 @router.get("/{bureau_id}", response_model=BureauVoteOut)

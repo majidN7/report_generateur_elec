@@ -74,3 +74,15 @@ def test_import_bureaux_centraux_rejects_non_excel_file(client):
         files={"file": ("data.txt", b"hello", "text/plain")},
     )
     assert response.status_code == 400
+
+
+def test_delete_all_bureaux_centraux(client):
+    with open(FIXTURE, "rb") as f:
+        client.post("/api/bureaux-centraux/import", files={"file": ("f.xlsx", f, "application/octet-stream")})
+
+    response = client.delete("/api/bureaux-centraux/all")
+    assert response.status_code == 200
+    assert response.json()["deleted"] == 3
+
+    listing = client.get("/api/bureaux-centraux").json()
+    assert listing["total"] == 0

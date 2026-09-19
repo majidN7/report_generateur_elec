@@ -239,6 +239,14 @@ Voir l'arborescence ci-dessus. Les routes API principales :
 | POST    | `/api/bureaux/generate-batch`      | Télécharger un ZIP de tous les arrêtés|
 | GET/POST/PUT/DELETE | `/api/bureaux-centraux*`   | Mêmes opérations pour les bureaux centraux |
 | POST    | `/api/bureaux-centraux/import`     | Import dédié du fichier Excel des bureaux centraux |
+| DELETE  | `/api/bureaux/all`                 | Supprimer tous les bureaux de vote (irréversible) |
+| DELETE  | `/api/bureaux-centraux/all`        | Supprimer tous les bureaux centraux (irréversible) |
+
+Le bouton *Supprimer tout* de chaque onglet appelle l'un de ces deux
+endpoints après confirmation explicite (le nombre d'enregistrements est
+affiché dans la boîte de dialogue) ; les deux tables sont indépendantes,
+supprimer les bureaux de vote n'efface pas les bureaux centraux et
+inversement.
 
 Documentation interactive complète (Swagger) disponible sur `/docs` une fois
 le backend démarré.

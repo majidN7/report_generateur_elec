@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import {
   createBureau,
+  deleteAllBureaux,
   deleteBureau,
   downloadBureauDocument,
   generateBatch,
@@ -51,6 +52,7 @@ export function BureauxPage() {
   const [editing, setEditing] = useState<BureauVote | "new" | null>(null)
   const [viewing, setViewing] = useState<BureauVote | null>(null)
   const [deleting, setDeleting] = useState<BureauVote | null>(null)
+  const [deletingAll, setDeletingAll] = useState(false)
   const [generating, setGenerating] = useState(false)
 
   async function load() {
@@ -117,6 +119,19 @@ export function BureauxPage() {
     }
   }
 
+  async function handleDeleteAll() {
+    try {
+      const deleted = await deleteAllBureaux()
+      showToast(`${deleted} bureau(x) de vote supprimé(s)`)
+      setDeletingAll(false)
+      setPage(1)
+      load()
+      listCommunes().then(setCommunes).catch(() => undefined)
+    } catch (err) {
+      showToast(extractErrorMessage(err), "error")
+    }
+  }
+
   async function handleDownload(bureau: BureauVote, format: "docx" | "pdf") {
     try {
       await downloadBureauDocument(bureau, format)
@@ -172,6 +187,13 @@ export function BureauxPage() {
             className="rounded-md bg-blue-600 px-3 py-1.5 text-sm text-white hover:bg-blue-700"
           >
             + Ajouter un bureau
+          </button>
+          <button
+            onClick={() => setDeletingAll(true)}
+            disabled={total === 0}
+            className="rounded-md border border-red-300 bg-white px-3 py-1.5 text-sm text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Supprimer tout
           </button>
         </div>
       </div>
@@ -337,6 +359,14 @@ export function BureauxPage() {
           message={`Supprimer le bureau de vote n° ${deleting.numero_bureau} (${deleting.commune}) ? Cette action est irréversible.`}
           onConfirm={handleDelete}
           onCancel={() => setDeleting(null)}
+        />
+      )}
+
+      {deletingAll && (
+        <ConfirmDialog
+          message={`Supprimer les ${total} bureau(x) de vote enregistré(s) ? Cette action est définitive et irréversible. Les bureaux centraux ne sont pas affectés.`}
+          onConfirm={handleDeleteAll}
+          onCancel={() => setDeletingAll(false)}
         />
       )}
     </div>

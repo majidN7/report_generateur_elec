@@ -59,3 +59,21 @@ def test_list_pagination_and_search(client):
 
     search = client.get("/api/bureaux?search=بنعلي").json()
     assert search["total"] == 5
+
+
+def test_delete_all_bureaux(client):
+    for i in range(1, 4):
+        client.post("/api/bureaux", json=dict(SAMPLE, numero_bureau=str(i)))
+
+    response = client.delete("/api/bureaux/all")
+    assert response.status_code == 200
+    assert response.json()["deleted"] == 3
+
+    listing = client.get("/api/bureaux").json()
+    assert listing["total"] == 0
+
+
+def test_delete_all_bureaux_when_empty(client):
+    response = client.delete("/api/bureaux/all")
+    assert response.status_code == 200
+    assert response.json()["deleted"] == 0

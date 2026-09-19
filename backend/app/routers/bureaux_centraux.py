@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.bureau_central import BureauCentral
+from app.schemas.bulk_delete import BulkDeleteResponse
 from app.schemas.bureau_central import (
     BureauCentralCreate,
     BureauCentralOut,
@@ -89,6 +90,13 @@ def import_bureaux_centraux(file: UploadFile = File(...), db: Session = Depends(
         return import_excel_bureaux_centraux(db, content)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.delete("/all", response_model=BulkDeleteResponse)
+def delete_all_bureaux_centraux(db: Session = Depends(get_db)):
+    deleted = db.query(BureauCentral).delete()
+    db.commit()
+    return BulkDeleteResponse(deleted=deleted)
 
 
 @router.get("/{bureau_id}", response_model=BureauCentralOut)

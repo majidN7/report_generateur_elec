@@ -39,6 +39,11 @@ export async function deleteBureau(id: number): Promise<void> {
   await api.delete(`/bureaux/${id}`)
 }
 
+export async function deleteAllBureaux(): Promise<number> {
+  const { data } = await api.delete<{ deleted: number }>("/bureaux/all")
+  return data.deleted
+}
+
 export async function downloadBureauDocument(bureau: BureauVote, format: "docx" | "pdf") {
   const response = await api.get(`/bureaux/${bureau.id}/document`, {
     params: { format },
