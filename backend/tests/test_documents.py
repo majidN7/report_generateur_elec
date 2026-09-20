@@ -33,6 +33,55 @@ CENTRAL_CIN_FIELDS = {
     "suppleant_central_3_cin": "PC8",
 }
 
+# Real names/addresses reported from production (see the "problème de
+# génération PDF" report): long enough that "نائب الكاتب"/the president line
+# wrap onto an extra line, which used to push the seal image's fixed
+# vertical offset past the page's bottom edge -- LibreOffice then rendered
+# it half-clipped on page 1 with a near-blank page 2 (just the letterhead).
+LONG_REAL_WORLD_FIELDS = {
+    "numero_bureau": "11",
+    "commune": "ميجيك",
+    "adresse_bureau": "مؤسسة التفتح للتربية و التكوين قاعة 11 شارع علي ولد البن",
+    "president": "أيوب ارباز",
+    "president_cin": "JB507712",
+    "vice_president": "نصروهة حمية",
+    "vice_president_cin": "OD47780",
+    "membre_1": "أسامة  لغويزي",
+    "membre_1_cin": "OD54005",
+    "membre_2": "الشايعة  احمادي",
+    "membre_2_cin": "OD56633",
+    "membre_3": "فتيحة  لومير",
+    "membre_3_cin": "OD62259",
+    "suppleant_1": "خويرة  القاضي",
+    "suppleant_1_cin": "OD61134",
+    "suppleant_2": "معاد عملوك",
+    "suppleant_2_cin": "OD35837",
+    "suppleant_3": "اجداد الامين  محمدالامين",
+    "suppleant_3_cin": "OD41180",
+}
+
+
+def _pdf_page_count(pdf_bytes: bytes) -> int:
+    import re
+
+    match = re.search(rb"/Count\s+(\d+)", pdf_bytes)
+    assert match, "couldn't find a /Count entry in the generated PDF"
+    return int(match.group(1))
+
+
+@pytest.mark.skipif(not SOFFICE_AVAILABLE, reason="LibreOffice n'est pas installé")
+def test_generate_bureau_pdf_with_long_real_world_names(client):
+    """Regression test for a production bug: with unusually long (but real)
+    names/addresses, extra line-wraps used to push the seal image past the
+    page's bottom edge, and LibreOffice rendered it half-clipped across a
+    spurious near-blank second page. The seal is now anchored so this
+    degrades gracefully (same page, or a clean page break) instead."""
+    bureau_id = client.post("/api/bureaux", json=LONG_REAL_WORLD_FIELDS).json()["id"]
+    response = client.get(f"/api/bureaux/{bureau_id}/document?format=pdf")
+    assert response.status_code == 200
+    assert response.content[:4] == b"%PDF"
+    assert _pdf_page_count(response.content) <= 2
+
 
 def test_generate_bureau_docx_requires_cin(client):
     bureau_id = client.post("/api/bureaux", json=SAMPLE).json()["id"]

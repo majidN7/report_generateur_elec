@@ -287,6 +287,33 @@ ce sont des colonnes déjà présentes dans le modèle `BureauCentral`).
   n'est pas concerné par cet envoi et garde le cachet fixé précédemment.
   Vérifié par rendu PDF réel : le cachet reste sous la ligne de signature,
   sans chevaucher aucun texte ni sortir du cadre de la page.
+- **Correction d'un bug de génération PDF avec des noms/adresses longs
+  (20/09/2026)** : signalé en production sur un bureau réel (commune
+  "ميجيك", adresse et noms plus longs que les données de test) — le cachet
+  apparaissait à moitié coupé en bas de la page 1, suivie d'une page 2
+  quasi vide (juste l'en-tête répété). Cause : le cachet est une image
+  flottante ancrée à une position fixe sous son paragraphe ; quand un nom
+  (ex. "نائب الكاتب") passe sur 2 lignes au lieu d'une, ce paragraphe
+  descend d'une ligne et pousse le cachet — à décalage fixe inchangé — sous
+  le bas imprimable de la page, que LibreOffice rend alors à moitié
+  découpé plutôt que de le reporter proprement page suivante. Corrigé en
+  deux temps :
+  - suppression des 3 paragraphes vides superflus en fin de
+    `bureau_ordinaire.docx` (aucun rôle depuis que le cachet n'y occupe
+    plus un paragraphe dédié), ce qui redonne de la marge verticale ;
+  - le cachet reste ancré *au paragraphe* (pas à la page) sur les deux
+    modèles : ce mode s'adapte à la position réelle du texte, contrairement
+    à un ancrage à la page (testé puis écarté) qui reproduisait le même
+    chevauchement dès que le texte réel dépassait la position calibrée sur
+    les données de test.
+  Avec des noms exceptionnellement longs, le document peut désormais soit
+  tenir sur une page avec un chevauchement cosmétique mineur et limité au
+  mot fixe "الداخلة" (jamais sur une donnée dynamique), soit basculer
+  proprement sur 2 pages (cachet et ligne de signature en haut de la page
+  2, en-tête répété) — dans tous les cas sans troncature ni perte
+  d'information. Un test de non-régression
+  (`test_generate_bureau_pdf_with_long_real_world_names`) rejoue exactement
+  le cas signalé et vérifie que le PDF reste sur 1 ou 2 pages.
 - **En-tête "قرار عاملي رقم .........../2026" strictement statique** : ce
   numéro de décision n'est **ni lu, ni injecté, ni exposé** nulle part dans
   l'application — sur demande explicite, il doit rester intact et non
