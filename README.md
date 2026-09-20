@@ -277,6 +277,16 @@ ce sont des colonnes déjà présentes dans le modèle `BureauCentral`).
   position d'origine. Vérifié par rendu PDF réel sur les deux documents :
   le cachet ne chevauche aucun texte et reste entièrement dans le cadre de
   la page.
+- **Repositionnement suivant du cachet directement depuis `BV.docx`
+  (20/09/2026)** : un nouvel envoi de `BV.docx` déplace l'ancrage du cachet
+  du bureau ordinaire — il n'est plus dans un paragraphe vide séparé après
+  la ligne de date, mais dans le même paragraphe que "نائب الكاتب" (le
+  dernier suppléant), quelques lignes au-dessus. `bureau_ordinaire.docx`
+  est régénéré directement depuis ce fichier (même logique de préservation
+  des runs `<w:drawing>` que pour le bureau central) ; `bureau_central.docx`
+  n'est pas concerné par cet envoi et garde le cachet fixé précédemment.
+  Vérifié par rendu PDF réel : le cachet reste sous la ligne de signature,
+  sans chevaucher aucun texte ni sortir du cadre de la page.
 - **En-tête "قرار عاملي رقم .........../2026" strictement statique** : ce
   numéro de décision n'est **ni lu, ni injecté, ni exposé** nulle part dans
   l'application — sur demande explicite, il doit rester intact et non
