@@ -210,12 +210,19 @@ ce sont des colonnes déjà présentes dans le modèle `BureauCentral`).
 ## Décisions de conception importantes
 
 - **Deux modèles de documents, mis à jour le 19/09/2026 puis via BV.docx /
-  BVC.docx** : le fichier Word officiel fourni contient deux arrêtés types
-  (bureaux de vote ordinaires et bureaux de vote centraux). Les modèles
-  `docxtpl` actuels (`backend/app/templates_word/bureau_ordinaire.docx` et
-  `bureau_central.docx`) proviennent de `BV.docx`/`BVC.docx`, la dernière
-  version officielle, qui a introduit deux changements par rapport aux
-  versions précédentes :
+  BVC.docx, puis BV_2.docx / BVC_2.docx (20/09/2026)** : le fichier Word
+  officiel fourni contient deux arrêtés types (bureaux de vote ordinaires
+  et bureaux de vote centraux). Les modèles `docxtpl` actuels
+  (`backend/app/templates_word/bureau_ordinaire.docx` et
+  `bureau_central.docx`) proviennent de `BV_2.docx`/`BVC_2.docx`, la
+  dernière version officielle — une révision de mise en forme/libellés de
+  `BV.docx`/`BVC.docx` (retrait du "؛" superflu après le CIN de chaque
+  membre/suppléant, ponctuation des "الفصل..." resserrée, un paragraphe vide
+  ajouté avant la ligne de signature) qui garde exactement les mêmes champs
+  dynamiques et le même en-tête statique ; seul le mapping des placeholders
+  a été régénéré depuis ce nouveau fichier. Le fichier officiel précédent
+  avait lui-même introduit deux changements par rapport aux versions plus
+  anciennes :
   - chaque personne (président, vice-président, 3 membres, 3 suppléants)
     porte la mention "الحامل لبطاقة التعريف الوطنية رقم ..." (numéro de
     CIN) ; le 3ᵉ membre/suppléant est désigné "كاتب" / "نائب الكاتب" (clerc)
@@ -233,6 +240,16 @@ ce sont des colonnes déjà présentes dans le modèle `BureauCentral`).
   identique au modèle officiel : ni la date du scrutin ni l'identité du Wali
   ne sont des champs dynamiques, ce point n'étant pas marqué comme tel dans
   le modèle fourni.
+- **Normalisation d'un artefact de saisie dans `BVC_2.docx`** : le
+  paragraphe "نائب لرئيس..." du bureau central contenait, dans le fichier
+  officiel fourni, un caractère "…" isolé juste avant le blanc du nom (un
+  reliquat de saisie visiblement non intentionnel — l'équivalent côté
+  `BV_2.docx` n'a pas cette anomalie). Le script de génération du template
+  (`build_bv2_bvc2.py`, script ponctuel non versionné) fusionne les
+  séquences de points/points de suspension séparées par de simples espaces
+  en un seul blanc avant d'y substituer un placeholder Jinja, ce qui évite
+  de reproduire ce "…" orphelin dans le document généré ; tout le reste du
+  texte (visas, articles, ponctuation) est repris tel quel.
 - **En-tête "قرار عاملي رقم .........../2026" strictement statique** : ce
   numéro de décision n'est **ni lu, ni injecté, ni exposé** nulle part dans
   l'application — sur demande explicite, il doit rester intact et non
