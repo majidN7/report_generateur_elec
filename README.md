@@ -263,6 +263,20 @@ ce sont des colonnes déjà présentes dans le modèle `BureauCentral`).
   texte autour de lui. Vérifié par rendu PDF réel (le cachet apparaît de
   nouveau sous la ligne de signature du bureau central, comme celle du
   bureau ordinaire).
+- **Cachet identique et repositionné (20/09/2026) sur les deux modèles** :
+  un nouvel envoi de `BVC.docx` a amélioré la taille et le positionnement
+  du cachet (agrandi, décalé, passé devant le texte plutôt que derrière).
+  Ce cachet exact (même image, même taille, même position) a été reporté
+  sur `bureau_ordinaire.docx` également, pour que les deux documents
+  affichent un cachet identique. Techniquement : l'image et l'élément
+  `<w:drawing>` (avec ses attributs `wp:extent`/`wp:positionH`/
+  `wp:positionV`/`behindDoc`) sont copiés tels quels du bureau central vers
+  le bureau ordinaire — seule la relation `r:embed` est réécrite pour
+  pointer vers l'image nouvellement ajoutée au paquet `.docx` cible
+  (`document.part.get_or_add_image`), sans toucher à la taille ni à la
+  position d'origine. Vérifié par rendu PDF réel sur les deux documents :
+  le cachet ne chevauche aucun texte et reste entièrement dans le cadre de
+  la page.
 - **En-tête "قرار عاملي رقم .........../2026" strictement statique** : ce
   numéro de décision n'est **ni lu, ni injecté, ni exposé** nulle part dans
   l'application — sur demande explicite, il doit rester intact et non
