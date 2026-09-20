@@ -4,6 +4,7 @@ from io import BytesIO
 
 import pytest
 from docx import Document
+from docx.oxml.ns import qn
 
 from tests.test_bureaux_crud import SAMPLE
 
@@ -85,6 +86,41 @@ def test_generate_batch_zip_skips_incomplete_cin(client):
     assert response.headers["X-Skipped-Incomplete"] == "1"
     zf = zipfile.ZipFile(BytesIO(response.content))
     assert len(zf.namelist()) == 3
+
+
+def test_generated_documents_keep_the_official_seal_image(client):
+    """Regression test: the official seal/stamp is embedded as a <w:drawing>
+    anchored on the signature line. On bureau_central.docx that drawing
+    shares its run with the "الداخلة، في: ..." text, so a naive rebuild of
+    that paragraph's runs (to inject date_signature) would silently delete
+    it. Both generated documents must keep at least one drawing."""
+    vote_id = client.post("/api/bureaux", json=SAMPLE_WITH_CIN).json()["id"]
+    vote_doc = client.get(f"/api/bureaux/{vote_id}/document?format=docx")
+    assert vote_doc.status_code == 200
+    vote_drawings = Document(BytesIO(vote_doc.content)).element.body.findall(".//" + qn("w:drawing"))
+    assert len(vote_drawings) >= 1
+
+    central = client.post(
+        "/api/bureaux-centraux",
+        json={
+            "numero_bureau_central": "1",
+            "commune": "الداخلة",
+            "president_bureau_central": "عبد الحق بلعابد",
+            "adresse_bureau_central": "مقر المكتب المركزي",
+            "vice_president_bureau_central": "نائب الرئيس",
+            "membre_central_1": "عضو 1",
+            "membre_central_2": "عضو 2",
+            "membre_central_3": "عضو 3",
+            "suppleant_central_1": "نائب 1",
+            "suppleant_central_2": "نائب 2",
+            "suppleant_central_3": "نائب 3",
+            **CENTRAL_CIN_FIELDS,
+        },
+    ).json()
+    central_doc = client.get(f"/api/bureaux-centraux/{central['id']}/document?format=docx")
+    assert central_doc.status_code == 200
+    central_drawings = Document(BytesIO(central_doc.content)).element.body.findall(".//" + qn("w:drawing"))
+    assert len(central_drawings) >= 1
 
 
 def test_bureau_central_document_requires_complete_data(client):

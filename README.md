@@ -250,6 +250,19 @@ ce sont des colonnes déjà présentes dans le modèle `BureauCentral`).
   en un seul blanc avant d'y substituer un placeholder Jinja, ce qui évite
   de reproduire ce "…" orphelin dans le document généré ; tout le reste du
   texte (visas, articles, ponctuation) est repris tel quel.
+- **Cachet officiel préservé sur la ligne de signature du BVC** : dans
+  `BVC_2.docx`, l'image du cachet/sceau est ancrée dans le *même* run que
+  le texte "الداخلة، في: ......." (contrairement à `BV_2.docx`, où elle
+  occupe un paragraphe vide séparé, juste après la ligne de date). Une
+  première régénération du template a reconstruit ce paragraphe sans tenir
+  compte de l'image, la supprimant par erreur du document généré (le PDF du
+  bureau central s'arrêtait juste après la date, sans cachet, contrairement
+  au bureau ordinaire). Le script de génération du template a été corrigé
+  pour repérer tout run contenant un `<w:drawing>`/`<w:pict>` et le laisser
+  intact à sa position d'origine, en ne reconstruisant que les runs de
+  texte autour de lui. Vérifié par rendu PDF réel (le cachet apparaît de
+  nouveau sous la ligne de signature du bureau central, comme celle du
+  bureau ordinaire).
 - **En-tête "قرار عاملي رقم .........../2026" strictement statique** : ce
   numéro de décision n'est **ni lu, ni injecté, ni exposé** nulle part dans
   l'application — sur demande explicite, il doit rester intact et non
